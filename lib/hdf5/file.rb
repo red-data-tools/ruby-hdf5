@@ -18,16 +18,6 @@ module HDF5
       Dataset.new(@file_id, name, data)
     end
 
-    def [](name)
-      if HDF5::FFI.group_exists?(@file_id, name)
-        Group.new(@file_id, name)
-      elsif HDF5::FFI.dataset_exists?(@file_id, name)
-        Dataset.new(@file_id, name, nil)
-      else
-        raise 'Group or Dataset not found'
-      end
-    end
-
     def list_entries
       list = []
       callback = ::FFI::Function.new(:int, %i[int64_t string pointer pointer]) do |_, name, _, _|
