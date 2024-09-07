@@ -18,7 +18,7 @@ module HDF5
         require "pkg-config"
         libs = PKGConfig.libs("hdf5")
         pattern = %r{(?<=-L)/[^ ]+}
-        p lib_dir = libs.scan(pattern).first
+        lib_dir = libs.scan(pattern).first
         lib_path = File.expand_path(name, lib_dir)
       rescue PackageConfig::NotFoundError
         warn "hdf5.pc not found."
