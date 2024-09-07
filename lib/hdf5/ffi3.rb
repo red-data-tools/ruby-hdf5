@@ -231,27 +231,27 @@ module HDF5
 
     typedef :int, :register_t
 
-    attach_function "__bswap_16", [
+    attach_function '__bswap_16', [
       :__uint16_t
     ], :__uint16_t
 
-    attach_function "__bswap_32", [
+    attach_function '__bswap_32', [
       :__uint32_t
     ], :__uint32_t
 
-    attach_function "__bswap_64", [
+    attach_function '__bswap_64', [
       :__uint64_t
     ], :__uint64_t
 
-    attach_function "__uint16_identity", [
+    attach_function '__uint16_identity', [
       :__uint16_t
     ], :__uint16_t
 
-    attach_function "__uint32_identity", [
+    attach_function '__uint32_identity', [
       :__uint32_t
     ], :__uint32_t
 
-    attach_function "__uint64_identity", [
+    attach_function '__uint64_identity', [
       :__uint64_t
     ], :__uint64_t
 
@@ -289,7 +289,7 @@ module HDF5
 
     typedef :__fd_mask, :fd_mask
 
-    attach_function "select", [
+    attach_function 'select', [
       :int,
       FdSet.ptr,
       FdSet.ptr,
@@ -297,7 +297,7 @@ module HDF5
       Timeval.ptr
     ], :int
 
-    attach_function "pselect", [
+    attach_function 'pselect', [
       :int,
       FdSet.ptr,
       FdSet.ptr,
@@ -538,34 +538,34 @@ module HDF5
 
     ImaxdivT = Anon_Type_15
 
-    attach_function "imaxabs", [
+    attach_function 'imaxabs', [
       :intmax_t
     ], :intmax_t
 
-    attach_function "imaxdiv", %i[
+    attach_function 'imaxdiv', %i[
       intmax_t
       intmax_t
     ], ImaxdivT
 
-    attach_function "strtoimax", %i[
+    attach_function 'strtoimax', %i[
       string
       pointer
       int
     ], :intmax_t
 
-    attach_function "strtoumax", %i[
+    attach_function 'strtoumax', %i[
       string
       pointer
       int
     ], :uintmax_t
 
-    attach_function "wcstoimax", %i[
+    attach_function 'wcstoimax', %i[
       pointer
       pointer
       int
     ], :intmax_t
 
-    attach_function "wcstoumax", %i[
+    attach_function 'wcstoumax', %i[
       pointer
       pointer
       int
@@ -635,15 +635,15 @@ module HDF5
 
     # H5AllocStatsT = H5AllocStatsT
 
-    attach_function "H5open", [], :herr_t
+    attach_function 'H5open', [], :herr_t
 
-    attach_function "H5close", [], :herr_t
+    attach_function 'H5close', [], :herr_t
 
-    attach_function "H5dont_atexit", [], :herr_t
+    attach_function 'H5dont_atexit', [], :herr_t
 
-    attach_function "H5garbage_collect", [], :herr_t
+    attach_function 'H5garbage_collect', [], :herr_t
 
-    attach_function "H5set_free_list_limits", %i[
+    attach_function 'H5set_free_list_limits', %i[
       int
       int
       int
@@ -652,43 +652,43 @@ module HDF5
       int
     ], :herr_t
 
-    attach_function "H5get_free_list_sizes", %i[
+    attach_function 'H5get_free_list_sizes', %i[
       pointer
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5get_alloc_stats", [
+    attach_function 'H5get_alloc_stats', [
       H5AllocStatsT.ptr
     ], :herr_t
 
-    attach_function "H5get_libversion", %i[
+    attach_function 'H5get_libversion', %i[
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5check_version", %i[
+    attach_function 'H5check_version', %i[
       uint
       uint
       uint
     ], :herr_t
 
-    attach_function "H5is_library_threadsafe", [
+    attach_function 'H5is_library_threadsafe', [
       :pointer
     ], :herr_t
 
-    attach_function "H5free_memory", [
+    attach_function 'H5free_memory', [
       :pointer
     ], :herr_t
 
-    attach_function "H5allocate_memory", %i[
+    attach_function 'H5allocate_memory', %i[
       size_t
       hbool_t
     ], :pointer
 
-    attach_function "H5resize_memory", %i[
+    attach_function 'H5resize_memory', %i[
       pointer
       size_t
     ], :pointer
@@ -720,90 +720,90 @@ module HDF5
 
     typedef :pointer, :H5I_search_func_t
 
-    attach_function "H5Iregister", %i[
+    attach_function 'H5Iregister', %i[
       H5I_type_t
       pointer
     ], :hid_t
 
-    attach_function "H5Iobject_verify", %i[
+    attach_function 'H5Iobject_verify', %i[
       hid_t
       H5I_type_t
     ], :pointer
 
-    attach_function "H5Iremove_verify", %i[
+    attach_function 'H5Iremove_verify', %i[
       hid_t
       H5I_type_t
     ], :pointer
 
-    attach_function "H5Iget_type", [
+    attach_function 'H5Iget_type', [
       :hid_t
     ], :H5I_type_t
 
-    attach_function "H5Iget_file_id", [
+    attach_function 'H5Iget_file_id', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Iget_name", %i[
+    attach_function 'H5Iget_name', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Iinc_ref", [
+    attach_function 'H5Iinc_ref', [
       :hid_t
     ], :int
 
-    attach_function "H5Idec_ref", [
+    attach_function 'H5Idec_ref', [
       :hid_t
     ], :int
 
-    attach_function "H5Iget_ref", [
+    attach_function 'H5Iget_ref', [
       :hid_t
     ], :int
 
-    attach_function "H5Iregister_type", %i[
+    attach_function 'H5Iregister_type', %i[
       size_t
       uint
       H5I_free_t
     ], :H5I_type_t
 
-    attach_function "H5Iclear_type", %i[
+    attach_function 'H5Iclear_type', %i[
       H5I_type_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Idestroy_type", [
+    attach_function 'H5Idestroy_type', [
       :H5I_type_t
     ], :herr_t
 
-    attach_function "H5Iinc_type_ref", [
+    attach_function 'H5Iinc_type_ref', [
       :H5I_type_t
     ], :int
 
-    attach_function "H5Idec_type_ref", [
+    attach_function 'H5Idec_type_ref', [
       :H5I_type_t
     ], :int
 
-    attach_function "H5Iget_type_ref", [
+    attach_function 'H5Iget_type_ref', [
       :H5I_type_t
     ], :int
 
-    attach_function "H5Isearch", %i[
+    attach_function 'H5Isearch', %i[
       H5I_type_t
       H5I_search_func_t
       pointer
     ], :pointer
 
-    attach_function "H5Inmembers", %i[
+    attach_function 'H5Inmembers', %i[
       H5I_type_t
       pointer
     ], :herr_t
 
-    attach_function "H5Itype_exists", [
+    attach_function 'H5Itype_exists', [
       :H5I_type_t
     ], :htri_t
 
-    attach_function "H5Iis_valid", [
+    attach_function 'H5Iis_valid', [
       :hid_t
     ], :htri_t
 
@@ -1152,29 +1152,29 @@ module HDF5
 
     attach_variable :H5T_NATIVE_UINT_FAST64_g, :H5T_NATIVE_UINT_FAST64_g, :hid_t
 
-    attach_function "H5Tcreate", %i[
+    attach_function 'H5Tcreate', %i[
       H5T_class_t
       size_t
     ], :hid_t
 
-    attach_function "H5Tcopy", [
+    attach_function 'H5Tcopy', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Tclose", [
+    attach_function 'H5Tclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Tequal", %i[
+    attach_function 'H5Tequal', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Tlock", [
+    attach_function 'H5Tlock', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Tcommit2", %i[
+    attach_function 'H5Tcommit2', %i[
       hid_t
       string
       hid_t
@@ -1183,147 +1183,147 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Topen2", %i[
+    attach_function 'H5Topen2', %i[
       hid_t
       string
       hid_t
     ], :hid_t
 
-    attach_function "H5Tcommit_anon", %i[
+    attach_function 'H5Tcommit_anon', %i[
       hid_t
       hid_t
       hid_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Tget_create_plist", [
+    attach_function 'H5Tget_create_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Tcommitted", [
+    attach_function 'H5Tcommitted', [
       :hid_t
     ], :htri_t
 
-    attach_function "H5Tencode", %i[
+    attach_function 'H5Tencode', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Tdecode", [
+    attach_function 'H5Tdecode', [
       :pointer
     ], :hid_t
 
-    attach_function "H5Tflush", [
+    attach_function 'H5Tflush', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Trefresh", [
+    attach_function 'H5Trefresh', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Tinsert", %i[
+    attach_function 'H5Tinsert', %i[
       hid_t
       string
       size_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Tpack", [
+    attach_function 'H5Tpack', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Tenum_create", [
+    attach_function 'H5Tenum_create', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Tenum_insert", %i[
+    attach_function 'H5Tenum_insert', %i[
       hid_t
       string
       pointer
     ], :herr_t
 
-    attach_function "H5Tenum_nameof", %i[
+    attach_function 'H5Tenum_nameof', %i[
       hid_t
       pointer
       string
       size_t
     ], :herr_t
 
-    attach_function "H5Tenum_valueof", %i[
+    attach_function 'H5Tenum_valueof', %i[
       hid_t
       string
       pointer
     ], :herr_t
 
-    attach_function "H5Tvlen_create", [
+    attach_function 'H5Tvlen_create', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Tarray_create2", %i[
+    attach_function 'H5Tarray_create2', %i[
       hid_t
       uint
       pointer
     ], :hid_t
 
-    attach_function "H5Tget_array_ndims", [
+    attach_function 'H5Tget_array_ndims', [
       :hid_t
     ], :int
 
-    attach_function "H5Tget_array_dims2", %i[
+    attach_function 'H5Tget_array_dims2', %i[
       hid_t
       pointer
     ], :int
 
-    attach_function "H5Tset_tag", %i[
+    attach_function 'H5Tset_tag', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Tget_tag", [
+    attach_function 'H5Tget_tag', [
       :hid_t
     ], :string
 
-    attach_function "H5Tget_super", [
+    attach_function 'H5Tget_super', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Tget_class", [
+    attach_function 'H5Tget_class', [
       :hid_t
     ], :H5T_class_t
 
-    attach_function "H5Tdetect_class", %i[
+    attach_function 'H5Tdetect_class', %i[
       hid_t
       H5T_class_t
     ], :htri_t
 
-    attach_function "H5Tget_size", [
+    attach_function 'H5Tget_size', [
       :hid_t
     ], :size_t
 
-    attach_function "H5Tget_order", [
+    attach_function 'H5Tget_order', [
       :hid_t
     ], :H5T_order_t
 
-    attach_function "H5Tget_precision", [
+    attach_function 'H5Tget_precision', [
       :hid_t
     ], :size_t
 
-    attach_function "H5Tget_offset", [
+    attach_function 'H5Tget_offset', [
       :hid_t
     ], :int
 
-    attach_function "H5Tget_pad", %i[
+    attach_function 'H5Tget_pad', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Tget_sign", [
+    attach_function 'H5Tget_sign', [
       :hid_t
     ], :H5T_sign_t
 
-    attach_function "H5Tget_fields", %i[
+    attach_function 'H5Tget_fields', %i[
       hid_t
       pointer
       pointer
@@ -1332,102 +1332,102 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Tget_ebias", [
+    attach_function 'H5Tget_ebias', [
       :hid_t
     ], :size_t
 
-    attach_function "H5Tget_norm", [
+    attach_function 'H5Tget_norm', [
       :hid_t
     ], :H5T_norm_t
 
-    attach_function "H5Tget_inpad", [
+    attach_function 'H5Tget_inpad', [
       :hid_t
     ], :H5T_pad_t
 
-    attach_function "H5Tget_strpad", [
+    attach_function 'H5Tget_strpad', [
       :hid_t
     ], :H5T_str_t
 
-    attach_function "H5Tget_nmembers", [
+    attach_function 'H5Tget_nmembers', [
       :hid_t
     ], :int
 
-    attach_function "H5Tget_member_name", %i[
+    attach_function 'H5Tget_member_name', %i[
       hid_t
       uint
     ], :string
 
-    attach_function "H5Tget_member_index", %i[
+    attach_function 'H5Tget_member_index', %i[
       hid_t
       string
     ], :int
 
-    attach_function "H5Tget_member_offset", %i[
+    attach_function 'H5Tget_member_offset', %i[
       hid_t
       uint
     ], :size_t
 
-    attach_function "H5Tget_member_class", %i[
+    attach_function 'H5Tget_member_class', %i[
       hid_t
       uint
     ], :H5T_class_t
 
-    attach_function "H5Tget_member_type", %i[
+    attach_function 'H5Tget_member_type', %i[
       hid_t
       uint
     ], :hid_t
 
-    attach_function "H5Tget_member_value", %i[
+    attach_function 'H5Tget_member_value', %i[
       hid_t
       uint
       pointer
     ], :herr_t
 
-    attach_function "H5Tget_cset", [
+    attach_function 'H5Tget_cset', [
       :hid_t
     ], :H5T_cset_t
 
-    attach_function "H5Tis_variable_str", [
+    attach_function 'H5Tis_variable_str', [
       :hid_t
     ], :htri_t
 
-    attach_function "H5Tget_native_type", %i[
+    attach_function 'H5Tget_native_type', %i[
       hid_t
       H5T_direction_t
     ], :hid_t
 
-    attach_function "H5Tset_size", %i[
+    attach_function 'H5Tset_size', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Tset_order", %i[
+    attach_function 'H5Tset_order', %i[
       hid_t
       H5T_order_t
     ], :herr_t
 
-    attach_function "H5Tset_precision", %i[
+    attach_function 'H5Tset_precision', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Tset_offset", %i[
+    attach_function 'H5Tset_offset', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Tset_pad", %i[
+    attach_function 'H5Tset_pad', %i[
       hid_t
       H5T_pad_t
       H5T_pad_t
     ], :herr_t
 
-    attach_function "H5Tset_sign", %i[
+    attach_function 'H5Tset_sign', %i[
       hid_t
       H5T_sign_t
     ], :herr_t
 
-    attach_function "H5Tset_fields", %i[
+    attach_function 'H5Tset_fields', %i[
       hid_t
       size_t
       size_t
@@ -1436,32 +1436,32 @@ module HDF5
       size_t
     ], :herr_t
 
-    attach_function "H5Tset_ebias", %i[
+    attach_function 'H5Tset_ebias', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Tset_norm", %i[
+    attach_function 'H5Tset_norm', %i[
       hid_t
       H5T_norm_t
     ], :herr_t
 
-    attach_function "H5Tset_inpad", %i[
+    attach_function 'H5Tset_inpad', %i[
       hid_t
       H5T_pad_t
     ], :herr_t
 
-    attach_function "H5Tset_cset", %i[
+    attach_function 'H5Tset_cset', %i[
       hid_t
       H5T_cset_t
     ], :herr_t
 
-    attach_function "H5Tset_strpad", %i[
+    attach_function 'H5Tset_strpad', %i[
       hid_t
       H5T_str_t
     ], :herr_t
 
-    attach_function "H5Tregister", %i[
+    attach_function 'H5Tregister', %i[
       H5T_pers_t
       string
       hid_t
@@ -1469,7 +1469,7 @@ module HDF5
       H5T_conv_t
     ], :herr_t
 
-    attach_function "H5Tunregister", %i[
+    attach_function 'H5Tunregister', %i[
       H5T_pers_t
       string
       hid_t
@@ -1477,18 +1477,18 @@ module HDF5
       H5T_conv_t
     ], :herr_t
 
-    attach_function "H5Tfind", %i[
+    attach_function 'H5Tfind', %i[
       hid_t
       hid_t
       pointer
     ], :H5T_conv_t
 
-    attach_function "H5Tcompiler_conv", %i[
+    attach_function 'H5Tcompiler_conv', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Tconvert", %i[
+    attach_function 'H5Tconvert', %i[
       hid_t
       hid_t
       size_t
@@ -1497,25 +1497,25 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Tcommit1", %i[
+    attach_function 'H5Tcommit1', %i[
       hid_t
       string
       hid_t
     ], :herr_t
 
-    attach_function "H5Topen1", %i[
+    attach_function 'H5Topen1', %i[
       hid_t
       string
     ], :hid_t
 
-    attach_function "H5Tarray_create1", %i[
+    attach_function 'H5Tarray_create1', %i[
       hid_t
       int
       pointer
       pointer
     ], :hid_t
 
-    attach_function "H5Tget_array_dims1", %i[
+    attach_function 'H5Tget_array_dims1', %i[
       hid_t
       pointer
       pointer
@@ -1596,7 +1596,7 @@ module HDF5
 
     typedef :pointer, :H5L_elink_traverse_t
 
-    attach_function "H5Lmove", %i[
+    attach_function 'H5Lmove', %i[
       hid_t
       string
       hid_t
@@ -1605,7 +1605,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lcopy", %i[
+    attach_function 'H5Lcopy', %i[
       hid_t
       string
       hid_t
@@ -1614,7 +1614,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lcreate_hard", %i[
+    attach_function 'H5Lcreate_hard', %i[
       hid_t
       string
       hid_t
@@ -1623,7 +1623,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lcreate_soft", %i[
+    attach_function 'H5Lcreate_soft', %i[
       string
       hid_t
       string
@@ -1631,13 +1631,13 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Ldelete", %i[
+    attach_function 'H5Ldelete', %i[
       hid_t
       string
       hid_t
     ], :herr_t
 
-    attach_function "H5Ldelete_by_idx", %i[
+    attach_function 'H5Ldelete_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -1646,7 +1646,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lget_val", %i[
+    attach_function 'H5Lget_val', %i[
       hid_t
       string
       pointer
@@ -1654,7 +1654,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lget_val_by_idx", %i[
+    attach_function 'H5Lget_val_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -1665,20 +1665,20 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lexists", %i[
+    attach_function 'H5Lexists', %i[
       hid_t
       string
       hid_t
     ], :htri_t
 
-    attach_function "H5Lget_info", [
+    attach_function 'H5Lget_info', [
       :hid_t,
       :string,
       H5LInfoT.ptr,
       :hid_t
     ], :herr_t
 
-    attach_function "H5Lget_info_by_idx", [
+    attach_function 'H5Lget_info_by_idx', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -1688,7 +1688,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Lget_name_by_idx", %i[
+    attach_function 'H5Lget_name_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -1699,7 +1699,7 @@ module HDF5
       hid_t
     ], :ssize_t
 
-    attach_function "H5Literate", %i[
+    attach_function 'H5Literate', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -1708,7 +1708,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Literate_by_name", %i[
+    attach_function 'H5Literate_by_name', %i[
       hid_t
       string
       H5_index_t
@@ -1719,7 +1719,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lvisit", %i[
+    attach_function 'H5Lvisit', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -1727,7 +1727,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Lvisit_by_name", %i[
+    attach_function 'H5Lvisit_by_name', %i[
       hid_t
       string
       H5_index_t
@@ -1737,7 +1737,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lcreate_ud", %i[
+    attach_function 'H5Lcreate_ud', %i[
       hid_t
       string
       H5L_type_t
@@ -1747,19 +1747,19 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Lregister", [
+    attach_function 'H5Lregister', [
       H5LClassT.ptr
     ], :herr_t
 
-    attach_function "H5Lunregister", [
+    attach_function 'H5Lunregister', [
       :H5L_type_t
     ], :herr_t
 
-    attach_function "H5Lis_registered", [
+    attach_function 'H5Lis_registered', [
       :H5L_type_t
     ], :htri_t
 
-    attach_function "H5Lunpack_elink_val", %i[
+    attach_function 'H5Lunpack_elink_val', %i[
       pointer
       size_t
       pointer
@@ -1767,7 +1767,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Lcreate_external", %i[
+    attach_function 'H5Lcreate_external', %i[
       string
       string
       hid_t
@@ -1849,18 +1849,18 @@ module HDF5
 
     typedef :pointer, :H5O_mcdt_search_cb_t
 
-    attach_function "H5Oopen", %i[
+    attach_function 'H5Oopen', %i[
       hid_t
       string
       hid_t
     ], :hid_t
 
-    attach_function "H5Oopen_by_addr", %i[
+    attach_function 'H5Oopen_by_addr', %i[
       hid_t
       haddr_t
     ], :hid_t
 
-    attach_function "H5Oopen_by_idx", %i[
+    attach_function 'H5Oopen_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -1869,19 +1869,19 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Oexists_by_name", %i[
+    attach_function 'H5Oexists_by_name', %i[
       hid_t
       string
       hid_t
     ], :htri_t
 
-    attach_function "H5Oget_info2", [
+    attach_function 'H5Oget_info2', [
       :hid_t,
       H5OInfoT.ptr,
       :uint
     ], :herr_t
 
-    attach_function "H5Oget_info_by_name2", [
+    attach_function 'H5Oget_info_by_name2', [
       :hid_t,
       :string,
       H5OInfoT.ptr,
@@ -1889,7 +1889,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oget_info_by_idx2", [
+    attach_function 'H5Oget_info_by_idx2', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -1900,7 +1900,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Olink", %i[
+    attach_function 'H5Olink', %i[
       hid_t
       hid_t
       string
@@ -1908,15 +1908,15 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Oincr_refcount", [
+    attach_function 'H5Oincr_refcount', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Odecr_refcount", [
+    attach_function 'H5Odecr_refcount', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Ocopy", %i[
+    attach_function 'H5Ocopy', %i[
       hid_t
       string
       hid_t
@@ -1925,25 +1925,25 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Oset_comment", %i[
+    attach_function 'H5Oset_comment', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Oset_comment_by_name", %i[
+    attach_function 'H5Oset_comment_by_name', %i[
       hid_t
       string
       string
       hid_t
     ], :herr_t
 
-    attach_function "H5Oget_comment", %i[
+    attach_function 'H5Oget_comment', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Oget_comment_by_name", %i[
+    attach_function 'H5Oget_comment_by_name', %i[
       hid_t
       string
       string
@@ -1951,7 +1951,7 @@ module HDF5
       hid_t
     ], :ssize_t
 
-    attach_function "H5Ovisit2", %i[
+    attach_function 'H5Ovisit2', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -1960,7 +1960,7 @@ module HDF5
       uint
     ], :herr_t
 
-    attach_function "H5Ovisit_by_name2", %i[
+    attach_function 'H5Ovisit_by_name2', %i[
       hid_t
       string
       H5_index_t
@@ -1971,44 +1971,44 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Oclose", [
+    attach_function 'H5Oclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oflush", [
+    attach_function 'H5Oflush', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Orefresh", [
+    attach_function 'H5Orefresh', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Odisable_mdc_flushes", [
+    attach_function 'H5Odisable_mdc_flushes', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oenable_mdc_flushes", [
+    attach_function 'H5Oenable_mdc_flushes', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oare_mdc_flushes_disabled", %i[
+    attach_function 'H5Oare_mdc_flushes_disabled', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Oget_info", [
+    attach_function 'H5Oget_info', [
       :hid_t,
       H5OInfoT.ptr
     ], :herr_t
 
-    attach_function "H5Oget_info_by_name", [
+    attach_function 'H5Oget_info_by_name', [
       :hid_t,
       :string,
       H5OInfoT.ptr,
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oget_info_by_idx", [
+    attach_function 'H5Oget_info_by_idx', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -2018,7 +2018,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Ovisit", %i[
+    attach_function 'H5Ovisit', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -2026,7 +2026,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Ovisit_by_name", %i[
+    attach_function 'H5Ovisit_by_name', %i[
       hid_t
       string
       H5_index_t
@@ -2036,19 +2036,19 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Oget_info1", [
+    attach_function 'H5Oget_info1', [
       :hid_t,
       H5OInfoT.ptr
     ], :herr_t
 
-    attach_function "H5Oget_info_by_name1", [
+    attach_function 'H5Oget_info_by_name1', [
       :hid_t,
       :string,
       H5OInfoT.ptr,
       :hid_t
     ], :herr_t
 
-    attach_function "H5Oget_info_by_idx1", [
+    attach_function 'H5Oget_info_by_idx1', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -2058,7 +2058,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Ovisit1", %i[
+    attach_function 'H5Ovisit1', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -2066,7 +2066,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Ovisit_by_name1", %i[
+    attach_function 'H5Ovisit_by_name1', %i[
       hid_t
       string
       H5_index_t
@@ -2098,11 +2098,11 @@ module HDF5
 
     typedef :pointer, :H5A_operator2_t
 
-    attach_function "H5Aclose", [
+    attach_function 'H5Aclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Acreate2", %i[
+    attach_function 'H5Acreate2', %i[
       hid_t
       string
       hid_t
@@ -2111,7 +2111,7 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Acreate_by_name", %i[
+    attach_function 'H5Acreate_by_name', %i[
       hid_t
       string
       string
@@ -2122,12 +2122,12 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Adelete", %i[
+    attach_function 'H5Adelete', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Adelete_by_idx", %i[
+    attach_function 'H5Adelete_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -2136,35 +2136,35 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Adelete_by_name", %i[
+    attach_function 'H5Adelete_by_name', %i[
       hid_t
       string
       string
       hid_t
     ], :herr_t
 
-    attach_function "H5Aexists", %i[
+    attach_function 'H5Aexists', %i[
       hid_t
       string
     ], :htri_t
 
-    attach_function "H5Aexists_by_name", %i[
+    attach_function 'H5Aexists_by_name', %i[
       hid_t
       string
       string
       hid_t
     ], :htri_t
 
-    attach_function "H5Aget_create_plist", [
+    attach_function 'H5Aget_create_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Aget_info", [
+    attach_function 'H5Aget_info', [
       :hid_t,
       H5AInfoT.ptr
     ], :herr_t
 
-    attach_function "H5Aget_info_by_idx", [
+    attach_function 'H5Aget_info_by_idx', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -2174,7 +2174,7 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Aget_info_by_name", [
+    attach_function 'H5Aget_info_by_name', [
       :hid_t,
       :string,
       :string,
@@ -2182,13 +2182,13 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Aget_name", %i[
+    attach_function 'H5Aget_name', %i[
       hid_t
       size_t
       string
     ], :ssize_t
 
-    attach_function "H5Aget_name_by_idx", %i[
+    attach_function 'H5Aget_name_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -2199,19 +2199,19 @@ module HDF5
       hid_t
     ], :ssize_t
 
-    attach_function "H5Aget_space", [
+    attach_function 'H5Aget_space', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Aget_storage_size", [
+    attach_function 'H5Aget_storage_size', [
       :hid_t
     ], :hsize_t
 
-    attach_function "H5Aget_type", [
+    attach_function 'H5Aget_type', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Aiterate2", %i[
+    attach_function 'H5Aiterate2', %i[
       hid_t
       H5_index_t
       H5_iter_order_t
@@ -2220,7 +2220,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Aiterate_by_name", %i[
+    attach_function 'H5Aiterate_by_name', %i[
       hid_t
       string
       H5_index_t
@@ -2231,13 +2231,13 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Aopen", %i[
+    attach_function 'H5Aopen', %i[
       hid_t
       string
       hid_t
     ], :hid_t
 
-    attach_function "H5Aopen_by_idx", %i[
+    attach_function 'H5Aopen_by_idx', %i[
       hid_t
       string
       H5_index_t
@@ -2247,7 +2247,7 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Aopen_by_name", %i[
+    attach_function 'H5Aopen_by_name', %i[
       hid_t
       string
       string
@@ -2255,25 +2255,25 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Aread", %i[
+    attach_function 'H5Aread', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Arename", %i[
+    attach_function 'H5Arename', %i[
       hid_t
       string
       string
     ], :herr_t
 
-    attach_function "H5Awrite", %i[
+    attach_function 'H5Awrite', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Arename_by_name", %i[
+    attach_function 'H5Arename_by_name', %i[
       hid_t
       string
       string
@@ -2283,7 +2283,7 @@ module HDF5
 
     typedef :pointer, :H5A_operator1_t
 
-    attach_function "H5Acreate1", %i[
+    attach_function 'H5Acreate1', %i[
       hid_t
       string
       hid_t
@@ -2291,23 +2291,23 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Aget_num_attrs", [
+    attach_function 'H5Aget_num_attrs', [
       :hid_t
     ], :int
 
-    attach_function "H5Aiterate1", %i[
+    attach_function 'H5Aiterate1', %i[
       hid_t
       pointer
       H5A_operator1_t
       pointer
     ], :herr_t
 
-    attach_function "H5Aopen_idx", %i[
+    attach_function 'H5Aopen_idx', %i[
       hid_t
       uint
     ], :hid_t
 
-    attach_function "H5Aopen_name", %i[
+    attach_function 'H5Aopen_name', %i[
       hid_t
       string
     ], :hid_t
@@ -2453,7 +2453,7 @@ module HDF5
 
     typedef :pointer, :H5D_chunk_iter_op_t
 
-    attach_function "H5Dcreate2", %i[
+    attach_function 'H5Dcreate2', %i[
       hid_t
       string
       hid_t
@@ -2463,7 +2463,7 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Dcreate_anon", %i[
+    attach_function 'H5Dcreate_anon', %i[
       hid_t
       hid_t
       hid_t
@@ -2471,50 +2471,50 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Dopen2", %i[
+    attach_function 'H5Dopen2', %i[
       hid_t
       string
       hid_t
     ], :hid_t
 
-    attach_function "H5Dget_space", [
+    attach_function 'H5Dget_space', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Dget_space_status", %i[
+    attach_function 'H5Dget_space_status', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dget_type", [
+    attach_function 'H5Dget_type', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Dget_create_plist", [
+    attach_function 'H5Dget_create_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Dget_access_plist", [
+    attach_function 'H5Dget_access_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Dget_storage_size", [
+    attach_function 'H5Dget_storage_size', [
       :hid_t
     ], :hsize_t
 
-    attach_function "H5Dget_chunk_storage_size", %i[
+    attach_function 'H5Dget_chunk_storage_size', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Dget_num_chunks", %i[
+    attach_function 'H5Dget_num_chunks', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dget_chunk_info_by_coord", %i[
+    attach_function 'H5Dget_chunk_info_by_coord', %i[
       hid_t
       pointer
       pointer
@@ -2522,14 +2522,14 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dchunk_iter", %i[
+    attach_function 'H5Dchunk_iter', %i[
       hid_t
       hid_t
       H5D_chunk_iter_op_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dget_chunk_info", %i[
+    attach_function 'H5Dget_chunk_info', %i[
       hid_t
       hid_t
       hsize_t
@@ -2539,11 +2539,11 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dget_offset", [
+    attach_function 'H5Dget_offset', [
       :hid_t
     ], :haddr_t
 
-    attach_function "H5Dread", %i[
+    attach_function 'H5Dread', %i[
       hid_t
       hid_t
       hid_t
@@ -2552,7 +2552,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dwrite", %i[
+    attach_function 'H5Dwrite', %i[
       hid_t
       hid_t
       hid_t
@@ -2561,7 +2561,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dwrite_chunk", %i[
+    attach_function 'H5Dwrite_chunk', %i[
       hid_t
       hid_t
       uint32_t
@@ -2570,7 +2570,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dread_chunk", %i[
+    attach_function 'H5Dread_chunk', %i[
       hid_t
       hid_t
       pointer
@@ -2578,7 +2578,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Diterate", %i[
+    attach_function 'H5Diterate', %i[
       pointer
       hid_t
       hid_t
@@ -2586,21 +2586,21 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dvlen_reclaim", %i[
+    attach_function 'H5Dvlen_reclaim', %i[
       hid_t
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dvlen_get_buf_size", %i[
+    attach_function 'H5Dvlen_get_buf_size', %i[
       hid_t
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dfill", %i[
+    attach_function 'H5Dfill', %i[
       pointer
       hid_t
       pointer
@@ -2608,20 +2608,20 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Dset_extent", %i[
+    attach_function 'H5Dset_extent', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dflush", [
+    attach_function 'H5Dflush', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Drefresh", [
+    attach_function 'H5Drefresh', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Dscatter", %i[
+    attach_function 'H5Dscatter', %i[
       H5D_scatter_func_t
       pointer
       hid_t
@@ -2629,7 +2629,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dgather", %i[
+    attach_function 'H5Dgather', %i[
       hid_t
       pointer
       hid_t
@@ -2639,24 +2639,24 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Dclose", [
+    attach_function 'H5Dclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Ddebug", [
+    attach_function 'H5Ddebug', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Dformat_convert", [
+    attach_function 'H5Dformat_convert', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Dget_chunk_index_type", %i[
+    attach_function 'H5Dget_chunk_index_type', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Dcreate1", %i[
+    attach_function 'H5Dcreate1', %i[
       hid_t
       string
       hid_t
@@ -2664,12 +2664,12 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Dopen1", %i[
+    attach_function 'H5Dopen1', %i[
       hid_t
       string
     ], :hid_t
 
-    attach_function "H5Dextend", %i[
+    attach_function 'H5Dextend', %i[
       hid_t
       pointer
     ], :herr_t
@@ -2750,185 +2750,185 @@ module HDF5
 
     attach_variable :stderr, :stderr, FILE.ptr
 
-    attach_function "remove", [
+    attach_function 'remove', [
       :string
     ], :int
 
-    attach_function "rename", %i[
+    attach_function 'rename', %i[
       string
       string
     ], :int
 
-    attach_function "renameat", %i[
+    attach_function 'renameat', %i[
       int
       string
       int
       string
     ], :int
 
-    attach_function "fclose", [
+    attach_function 'fclose', [
       FILE.ptr
     ], :int
 
-    attach_function "tmpfile", [], FILE.ptr
+    attach_function 'tmpfile', [], FILE.ptr
 
-    attach_function "tmpnam", [
+    attach_function 'tmpnam', [
       :pointer # [:char, 20]
     ], :string
 
-    attach_function "tmpnam_r", [
+    attach_function 'tmpnam_r', [
       :pointer # [:char, 20]
     ], :string
 
-    attach_function "tempnam", %i[
+    attach_function 'tempnam', %i[
       string
       string
     ], :string
 
-    attach_function "fflush", [
+    attach_function 'fflush', [
       FILE.ptr
     ], :int
 
-    attach_function "fflush_unlocked", [
+    attach_function 'fflush_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "fopen", %i[
+    attach_function 'fopen', %i[
       string
       string
     ], FILE.ptr
 
-    attach_function "freopen", [
+    attach_function 'freopen', [
       :string,
       :string,
       FILE.ptr
     ], FILE.ptr
 
-    attach_function "fdopen", %i[
+    attach_function 'fdopen', %i[
       int
       string
     ], FILE.ptr
 
-    attach_function "fopencookie", [
+    attach_function 'fopencookie', [
       :pointer,
       :string,
       CookieIoFunctionsT
     ], FILE.ptr
 
-    attach_function "fmemopen", %i[
+    attach_function 'fmemopen', %i[
       pointer
       size_t
       string
     ], FILE.ptr
 
-    attach_function "open_memstream", %i[
+    attach_function 'open_memstream', %i[
       pointer
       pointer
     ], FILE.ptr
 
-    attach_function "setbuf", [
+    attach_function 'setbuf', [
       FILE.ptr,
       :string
     ], :void
 
-    attach_function "setvbuf", [
+    attach_function 'setvbuf', [
       FILE.ptr,
       :string,
       :int,
       :size_t
     ], :int
 
-    attach_function "setbuffer", [
+    attach_function 'setbuffer', [
       FILE.ptr,
       :string,
       :size_t
     ], :void
 
-    attach_function "setlinebuf", [
+    attach_function 'setlinebuf', [
       FILE.ptr
     ], :void
 
-    attach_function "fprintf", [
+    attach_function 'fprintf', [
       FILE.ptr,
       :string
     ], :int
 
-    attach_function "printf", [
+    attach_function 'printf', [
       :string
     ], :int
 
-    attach_function "sprintf", %i[
+    attach_function 'sprintf', %i[
       string
       string
     ], :int
 
-    attach_function "vfprintf", [
+    attach_function 'vfprintf', [
       FILE.ptr,
       :string,
       :__gnuc_va_list
     ], :int
 
-    attach_function "vprintf", %i[
+    attach_function 'vprintf', %i[
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "vsprintf", %i[
+    attach_function 'vsprintf', %i[
       string
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "snprintf", %i[
+    attach_function 'snprintf', %i[
       string
       size_t
       string
     ], :int
 
-    attach_function "vsnprintf", %i[
+    attach_function 'vsnprintf', %i[
       string
       size_t
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "vasprintf", %i[
+    attach_function 'vasprintf', %i[
       pointer
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "__asprintf", %i[
+    attach_function '__asprintf', %i[
       pointer
       string
     ], :int
 
-    attach_function "asprintf", %i[
+    attach_function 'asprintf', %i[
       pointer
       string
     ], :int
 
-    attach_function "vdprintf", %i[
+    attach_function 'vdprintf', %i[
       int
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "dprintf", %i[
+    attach_function 'dprintf', %i[
       int
       string
     ], :int
 
-    attach_function "fscanf", [
+    attach_function 'fscanf', [
       FILE.ptr,
       :string
     ], :int
 
-    attach_function "scanf", [
+    attach_function 'scanf', [
       :string
     ], :int
 
-    attach_function "sscanf", %i[
+    attach_function 'sscanf', %i[
       string
       string
     ], :int
@@ -2941,279 +2941,279 @@ module HDF5
 
     typedef :long_double, :_Float64x
 
-    attach_function "fscanf", [
+    attach_function 'fscanf', [
       FILE.ptr,
       :string
     ], :int
 
-    attach_function "scanf", [
+    attach_function 'scanf', [
       :string
     ], :int
 
-    attach_function "sscanf", %i[
+    attach_function 'sscanf', %i[
       string
       string
     ], :int
 
-    attach_function "vfscanf", [
+    attach_function 'vfscanf', [
       FILE.ptr,
       :string,
       :__gnuc_va_list
     ], :int
 
-    attach_function "vscanf", %i[
+    attach_function 'vscanf', %i[
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "vsscanf", %i[
+    attach_function 'vsscanf', %i[
       string
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "vfscanf", [
+    attach_function 'vfscanf', [
       FILE.ptr,
       :string,
       :__gnuc_va_list
     ], :int
 
-    attach_function "vscanf", %i[
+    attach_function 'vscanf', %i[
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "vsscanf", %i[
+    attach_function 'vsscanf', %i[
       string
       string
       __gnuc_va_list
     ], :int
 
-    attach_function "fgetc", [
+    attach_function 'fgetc', [
       FILE.ptr
     ], :int
 
-    attach_function "getc", [
+    attach_function 'getc', [
       FILE.ptr
     ], :int
 
-    attach_function "getchar", [], :int
+    attach_function 'getchar', [], :int
 
-    attach_function "getc_unlocked", [
+    attach_function 'getc_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "getchar_unlocked", [], :int
+    attach_function 'getchar_unlocked', [], :int
 
-    attach_function "fgetc_unlocked", [
+    attach_function 'fgetc_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "fputc", [
+    attach_function 'fputc', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "putc", [
+    attach_function 'putc', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "putchar", [
+    attach_function 'putchar', [
       :int
     ], :int
 
-    attach_function "fputc_unlocked", [
+    attach_function 'fputc_unlocked', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "putc_unlocked", [
+    attach_function 'putc_unlocked', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "putchar_unlocked", [
+    attach_function 'putchar_unlocked', [
       :int
     ], :int
 
-    attach_function "getw", [
+    attach_function 'getw', [
       FILE.ptr
     ], :int
 
-    attach_function "putw", [
+    attach_function 'putw', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "fgets", [
+    attach_function 'fgets', [
       :string,
       :int,
       FILE.ptr
     ], :string
 
-    attach_function "__getdelim", [
+    attach_function '__getdelim', [
       :pointer,
       :pointer,
       :int,
       FILE.ptr
     ], :__ssize_t
 
-    attach_function "getdelim", [
+    attach_function 'getdelim', [
       :pointer,
       :pointer,
       :int,
       FILE.ptr
     ], :__ssize_t
 
-    attach_function "getline", [
+    attach_function 'getline', [
       :pointer,
       :pointer,
       FILE.ptr
     ], :__ssize_t
 
-    attach_function "fputs", [
+    attach_function 'fputs', [
       :string,
       FILE.ptr
     ], :int
 
-    attach_function "puts", [
+    attach_function 'puts', [
       :string
     ], :int
 
-    attach_function "ungetc", [
+    attach_function 'ungetc', [
       :int,
       FILE.ptr
     ], :int
 
-    attach_function "fread", [
+    attach_function 'fread', [
       :pointer,
       :size_t,
       :size_t,
       FILE.ptr
     ], :ulong
 
-    attach_function "fwrite", [
+    attach_function 'fwrite', [
       :pointer,
       :size_t,
       :size_t,
       FILE.ptr
     ], :ulong
 
-    attach_function "fread_unlocked", [
+    attach_function 'fread_unlocked', [
       :pointer,
       :size_t,
       :size_t,
       FILE.ptr
     ], :size_t
 
-    attach_function "fwrite_unlocked", [
+    attach_function 'fwrite_unlocked', [
       :pointer,
       :size_t,
       :size_t,
       FILE.ptr
     ], :size_t
 
-    attach_function "fseek", [
+    attach_function 'fseek', [
       FILE.ptr,
       :long,
       :int
     ], :int
 
-    attach_function "ftell", [
+    attach_function 'ftell', [
       FILE.ptr
     ], :long
 
-    attach_function "rewind", [
+    attach_function 'rewind', [
       FILE.ptr
     ], :void
 
-    attach_function "fseeko", [
+    attach_function 'fseeko', [
       FILE.ptr,
       :__off_t,
       :int
     ], :int
 
-    attach_function "ftello", [
+    attach_function 'ftello', [
       FILE.ptr
     ], :__off_t
 
-    attach_function "fgetpos", [
+    attach_function 'fgetpos', [
       FILE.ptr,
       FposT.ptr
     ], :int
 
-    attach_function "fsetpos", [
+    attach_function 'fsetpos', [
       FILE.ptr,
       FposT.ptr
     ], :int
 
-    attach_function "clearerr", [
+    attach_function 'clearerr', [
       FILE.ptr
     ], :void
 
-    attach_function "feof", [
+    attach_function 'feof', [
       FILE.ptr
     ], :int
 
-    attach_function "ferror", [
+    attach_function 'ferror', [
       FILE.ptr
     ], :int
 
-    attach_function "clearerr_unlocked", [
+    attach_function 'clearerr_unlocked', [
       FILE.ptr
     ], :void
 
-    attach_function "feof_unlocked", [
+    attach_function 'feof_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "ferror_unlocked", [
+    attach_function 'ferror_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "perror", [
+    attach_function 'perror', [
       :string
     ], :void
 
-    attach_function "fileno", [
+    attach_function 'fileno', [
       FILE.ptr
     ], :int
 
-    attach_function "fileno_unlocked", [
+    attach_function 'fileno_unlocked', [
       FILE.ptr
     ], :int
 
-    attach_function "pclose", [
+    attach_function 'pclose', [
       FILE.ptr
     ], :int
 
-    attach_function "popen", %i[
+    attach_function 'popen', %i[
       string
       string
     ], FILE.ptr
 
-    attach_function "ctermid", [
+    attach_function 'ctermid', [
       :string
     ], :string
 
-    attach_function "flockfile", [
+    attach_function 'flockfile', [
       FILE.ptr
     ], :void
 
-    attach_function "ftrylockfile", [
+    attach_function 'ftrylockfile', [
       FILE.ptr
     ], :int
 
-    attach_function "funlockfile", [
+    attach_function 'funlockfile', [
       FILE.ptr
     ], :void
 
-    attach_function "__uflow", [
+    attach_function '__uflow', [
       FILE.ptr
     ], :int
 
-    attach_function "__overflow", [
+    attach_function '__overflow', [
       FILE.ptr,
       :int
     ], :int
@@ -3591,45 +3591,45 @@ module HDF5
 
     typedef :pointer, :H5E_auto2_t
 
-    attach_function "H5Eregister_class", %i[
+    attach_function 'H5Eregister_class', %i[
       string
       string
       string
     ], :hid_t
 
-    attach_function "H5Eunregister_class", [
+    attach_function 'H5Eunregister_class', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Eclose_msg", [
+    attach_function 'H5Eclose_msg', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Ecreate_msg", %i[
+    attach_function 'H5Ecreate_msg', %i[
       hid_t
       H5E_type_t
       string
     ], :hid_t
 
-    attach_function "H5Ecreate_stack", [], :hid_t
+    attach_function 'H5Ecreate_stack', [], :hid_t
 
-    attach_function "H5Eget_current_stack", [], :hid_t
+    attach_function 'H5Eget_current_stack', [], :hid_t
 
-    attach_function "H5Eclose_stack", [
+    attach_function 'H5Eclose_stack', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Eget_class_name", %i[
+    attach_function 'H5Eget_class_name', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Eset_current_stack", [
+    attach_function 'H5Eset_current_stack', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Epush2", %i[
+    attach_function 'H5Epush2', %i[
       hid_t
       string
       string
@@ -3640,52 +3640,52 @@ module HDF5
       string
     ], :herr_t
 
-    attach_function "H5Epop", %i[
+    attach_function 'H5Epop', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Eprint2", [
+    attach_function 'H5Eprint2', [
       :hid_t,
       FILE.ptr
     ], :herr_t
 
-    attach_function "H5Ewalk2", %i[
+    attach_function 'H5Ewalk2', %i[
       hid_t
       H5E_direction_t
       H5E_walk2_t
       pointer
     ], :herr_t
 
-    attach_function "H5Eget_auto2", %i[
+    attach_function 'H5Eget_auto2', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Eset_auto2", %i[
+    attach_function 'H5Eset_auto2', %i[
       hid_t
       H5E_auto2_t
       pointer
     ], :herr_t
 
-    attach_function "H5Eclear2", [
+    attach_function 'H5Eclear2', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Eauto_is_v2", %i[
+    attach_function 'H5Eauto_is_v2', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Eget_msg", %i[
+    attach_function 'H5Eget_msg', %i[
       hid_t
       pointer
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Eget_num", [
+    attach_function 'H5Eget_num', [
       :hid_t
     ], :ssize_t
 
@@ -3709,14 +3709,14 @@ module HDF5
 
     typedef :pointer, :H5E_auto1_t
 
-    attach_function "H5Eclear1", [], :herr_t
+    attach_function 'H5Eclear1', [], :herr_t
 
-    attach_function "H5Eget_auto1", %i[
+    attach_function 'H5Eget_auto1', %i[
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Epush1", %i[
+    attach_function 'H5Epush1', %i[
       string
       string
       uint
@@ -3725,26 +3725,26 @@ module HDF5
       string
     ], :herr_t
 
-    attach_function "H5Eprint1", [
+    attach_function 'H5Eprint1', [
       FILE.ptr
     ], :herr_t
 
-    attach_function "H5Eset_auto1", %i[
+    attach_function 'H5Eset_auto1', %i[
       H5E_auto1_t
       pointer
     ], :herr_t
 
-    attach_function "H5Ewalk1", %i[
+    attach_function 'H5Ewalk1', %i[
       H5E_direction_t
       H5E_walk1_t
       pointer
     ], :herr_t
 
-    attach_function "H5Eget_major", [
+    attach_function 'H5Eget_major', [
       :H5E_major_t
     ], :string
 
-    attach_function "H5Eget_minor", [
+    attach_function 'H5Eget_minor', [
       :H5E_minor_t
     ], :string
 
@@ -3857,120 +3857,120 @@ module HDF5
 
     typedef :pointer, :H5F_flush_cb_t
 
-    attach_function "H5Fis_hdf5", [
+    attach_function 'H5Fis_hdf5', [
       :string
     ], :htri_t
 
-    attach_function "H5Fcreate", %i[
+    attach_function 'H5Fcreate', %i[
       string
       uint
       hid_t
       hid_t
     ], :hid_t
 
-    attach_function "H5Fopen", %i[
+    attach_function 'H5Fopen', %i[
       string
       uint
       hid_t
     ], :hid_t
 
-    attach_function "H5Freopen", [
+    attach_function 'H5Freopen', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Fflush", %i[
+    attach_function 'H5Fflush', %i[
       hid_t
       H5F_scope_t
     ], :herr_t
 
-    attach_function "H5Fclose", [
+    attach_function 'H5Fclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fget_create_plist", [
+    attach_function 'H5Fget_create_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Fget_access_plist", [
+    attach_function 'H5Fget_access_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Fget_intent", %i[
+    attach_function 'H5Fget_intent', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fget_obj_count", %i[
+    attach_function 'H5Fget_obj_count', %i[
       hid_t
       uint
     ], :ssize_t
 
-    attach_function "H5Fget_obj_ids", %i[
+    attach_function 'H5Fget_obj_ids', %i[
       hid_t
       uint
       size_t
       pointer
     ], :ssize_t
 
-    attach_function "H5Fget_vfd_handle", %i[
+    attach_function 'H5Fget_vfd_handle', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fmount", %i[
+    attach_function 'H5Fmount', %i[
       hid_t
       string
       hid_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Funmount", %i[
+    attach_function 'H5Funmount', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Fget_freespace", [
+    attach_function 'H5Fget_freespace', [
       :hid_t
     ], :hssize_t
 
-    attach_function "H5Fget_filesize", %i[
+    attach_function 'H5Fget_filesize', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fget_eoa", %i[
+    attach_function 'H5Fget_eoa', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fincrement_filesize", %i[
+    attach_function 'H5Fincrement_filesize', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Fget_file_image", %i[
+    attach_function 'H5Fget_file_image', %i[
       hid_t
       pointer
       size_t
     ], :ssize_t
 
-    attach_function "H5Fget_mdc_config", [
+    attach_function 'H5Fget_mdc_config', [
       :hid_t,
       H5ACCacheConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Fset_mdc_config", [
+    attach_function 'H5Fset_mdc_config', [
       :hid_t,
       H5ACCacheConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Fget_mdc_hit_rate", %i[
+    attach_function 'H5Fget_mdc_hit_rate', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fget_mdc_size", %i[
+    attach_function 'H5Fget_mdc_size', %i[
       hid_t
       pointer
       pointer
@@ -3978,70 +3978,70 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Freset_mdc_hit_rate_stats", [
+    attach_function 'H5Freset_mdc_hit_rate_stats', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fget_name", %i[
+    attach_function 'H5Fget_name', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Fget_info2", [
+    attach_function 'H5Fget_info2', [
       :hid_t,
       H5FInfo2T.ptr
     ], :herr_t
 
-    attach_function "H5Fget_metadata_read_retry_info", [
+    attach_function 'H5Fget_metadata_read_retry_info', [
       :hid_t,
       H5FRetryInfoT.ptr
     ], :herr_t
 
-    attach_function "H5Fstart_swmr_write", [
+    attach_function 'H5Fstart_swmr_write', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fget_free_sections", [
+    attach_function 'H5Fget_free_sections', [
       :hid_t,
       :H5F_mem_t,
       :size_t,
       H5FSectInfoT.ptr
     ], :ssize_t
 
-    attach_function "H5Fclear_elink_file_cache", [
+    attach_function 'H5Fclear_elink_file_cache', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fset_libver_bounds", %i[
+    attach_function 'H5Fset_libver_bounds', %i[
       hid_t
       H5F_libver_t
       H5F_libver_t
     ], :herr_t
 
-    attach_function "H5Fstart_mdc_logging", [
+    attach_function 'H5Fstart_mdc_logging', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fstop_mdc_logging", [
+    attach_function 'H5Fstop_mdc_logging', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fget_mdc_logging_status", %i[
+    attach_function 'H5Fget_mdc_logging_status', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Fformat_convert", [
+    attach_function 'H5Fformat_convert', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Freset_page_buffering_stats", [
+    attach_function 'H5Freset_page_buffering_stats', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Fget_page_buffering_stats", [
+    attach_function 'H5Fget_page_buffering_stats', [
       :hid_t,
       :pointer, # [:uint, 2]
       :pointer, # [:uint, 2]
@@ -4050,18 +4050,18 @@ module HDF5
       :pointer # [:uint, 2]
     ], :herr_t
 
-    attach_function "H5Fget_mdc_image_info", %i[
+    attach_function 'H5Fget_mdc_image_info', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Fget_dset_no_attrs_hint", %i[
+    attach_function 'H5Fget_dset_no_attrs_hint', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Fset_dset_no_attrs_hint", %i[
+    attach_function 'H5Fset_dset_no_attrs_hint', %i[
       hid_t
       hbool_t
     ], :herr_t
@@ -4080,12 +4080,12 @@ module HDF5
 
     # H5FInfo1T = H5FInfo1T
 
-    attach_function "H5Fget_info1", [
+    attach_function 'H5Fget_info1', [
       :hid_t,
       H5FInfo1T.ptr
     ], :herr_t
 
-    attach_function "H5Fset_latest_format", %i[
+    attach_function 'H5Fset_latest_format', %i[
       hid_t
       hbool_t
     ], :herr_t
@@ -4174,43 +4174,43 @@ module HDF5
 
     H5FDFileImageCallbacksT = Anon_Type_32
 
-    attach_function "H5FDregister", [
+    attach_function 'H5FDregister', [
       H5FDClassT.ptr
     ], :hid_t
 
-    attach_function "H5FDunregister", [
+    attach_function 'H5FDunregister', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5FDopen", %i[
+    attach_function 'H5FDopen', %i[
       string
       uint
       hid_t
       haddr_t
     ], H5FDT.ptr
 
-    attach_function "H5FDclose", [
+    attach_function 'H5FDclose', [
       H5FDT.ptr
     ], :herr_t
 
-    attach_function "H5FDcmp", [
+    attach_function 'H5FDcmp', [
       H5FDT.ptr,
       H5FDT.ptr
     ], :int
 
-    attach_function "H5FDquery", [
+    attach_function 'H5FDquery', [
       H5FDT.ptr,
       :pointer
     ], :int
 
-    attach_function "H5FDalloc", [
+    attach_function 'H5FDalloc', [
       H5FDT.ptr,
       :H5FD_mem_t,
       :hid_t,
       :hsize_t
     ], :haddr_t
 
-    attach_function "H5FDfree", [
+    attach_function 'H5FDfree', [
       H5FDT.ptr,
       :H5FD_mem_t,
       :hid_t,
@@ -4218,29 +4218,29 @@ module HDF5
       :hsize_t
     ], :herr_t
 
-    attach_function "H5FDget_eoa", [
+    attach_function 'H5FDget_eoa', [
       H5FDT.ptr,
       :H5FD_mem_t
     ], :haddr_t
 
-    attach_function "H5FDset_eoa", [
+    attach_function 'H5FDset_eoa', [
       H5FDT.ptr,
       :H5FD_mem_t,
       :haddr_t
     ], :herr_t
 
-    attach_function "H5FDget_eof", [
+    attach_function 'H5FDget_eof', [
       H5FDT.ptr,
       :H5FD_mem_t
     ], :haddr_t
 
-    attach_function "H5FDget_vfd_handle", [
+    attach_function 'H5FDget_vfd_handle', [
       H5FDT.ptr,
       :hid_t,
       :pointer
     ], :herr_t
 
-    attach_function "H5FDread", [
+    attach_function 'H5FDread', [
       H5FDT.ptr,
       :H5FD_mem_t,
       :hid_t,
@@ -4249,7 +4249,7 @@ module HDF5
       :pointer
     ], :herr_t
 
-    attach_function "H5FDwrite", [
+    attach_function 'H5FDwrite', [
       H5FDT.ptr,
       :H5FD_mem_t,
       :hid_t,
@@ -4258,28 +4258,28 @@ module HDF5
       :pointer
     ], :herr_t
 
-    attach_function "H5FDflush", [
+    attach_function 'H5FDflush', [
       H5FDT.ptr,
       :hid_t,
       :hbool_t
     ], :herr_t
 
-    attach_function "H5FDtruncate", [
+    attach_function 'H5FDtruncate', [
       H5FDT.ptr,
       :hid_t,
       :hbool_t
     ], :herr_t
 
-    attach_function "H5FDlock", [
+    attach_function 'H5FDlock', [
       H5FDT.ptr,
       :hbool_t
     ], :herr_t
 
-    attach_function "H5FDunlock", [
+    attach_function 'H5FDunlock', [
       H5FDT.ptr
     ], :herr_t
 
-    attach_function "H5FDdriver_query", %i[
+    attach_function 'H5FDdriver_query', %i[
       hid_t
       pointer
     ], :herr_t
@@ -4303,7 +4303,7 @@ module HDF5
 
     # H5GInfoT = H5GInfoT
 
-    attach_function "H5Gcreate2", %i[
+    attach_function 'H5Gcreate2', %i[
       hid_t
       string
       hid_t
@@ -4311,35 +4311,35 @@ module HDF5
       hid_t
     ], :hid_t
 
-    attach_function "H5Gcreate_anon", %i[
+    attach_function 'H5Gcreate_anon', %i[
       hid_t
       hid_t
       hid_t
     ], :hid_t
 
-    attach_function "H5Gopen2", %i[
+    attach_function 'H5Gopen2', %i[
       hid_t
       string
       hid_t
     ], :hid_t
 
-    attach_function "H5Gget_create_plist", [
+    attach_function 'H5Gget_create_plist', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Gget_info", [
+    attach_function 'H5Gget_info', [
       :hid_t,
       H5GInfoT.ptr
     ], :herr_t
 
-    attach_function "H5Gget_info_by_name", [
+    attach_function 'H5Gget_info_by_name', [
       :hid_t,
       :string,
       H5GInfoT.ptr,
       :hid_t
     ], :herr_t
 
-    attach_function "H5Gget_info_by_idx", [
+    attach_function 'H5Gget_info_by_idx', [
       :hid_t,
       :string,
       :H5_index_t,
@@ -4349,15 +4349,15 @@ module HDF5
       :hid_t
     ], :herr_t
 
-    attach_function "H5Gflush", [
+    attach_function 'H5Gflush', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Grefresh", [
+    attach_function 'H5Grefresh', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Gclose", [
+    attach_function 'H5Gclose', [
       :hid_t
     ], :herr_t
 
@@ -4390,25 +4390,25 @@ module HDF5
 
     # H5GStatT = H5GStatT
 
-    attach_function "H5Gcreate1", %i[
+    attach_function 'H5Gcreate1', %i[
       hid_t
       string
       size_t
     ], :hid_t
 
-    attach_function "H5Gopen1", %i[
+    attach_function 'H5Gopen1', %i[
       hid_t
       string
     ], :hid_t
 
-    attach_function "H5Glink", %i[
+    attach_function 'H5Glink', %i[
       hid_t
       H5L_type_t
       string
       string
     ], :herr_t
 
-    attach_function "H5Glink2", %i[
+    attach_function 'H5Glink2', %i[
       hid_t
       string
       H5L_type_t
@@ -4416,45 +4416,45 @@ module HDF5
       string
     ], :herr_t
 
-    attach_function "H5Gmove", %i[
+    attach_function 'H5Gmove', %i[
       hid_t
       string
       string
     ], :herr_t
 
-    attach_function "H5Gmove2", %i[
+    attach_function 'H5Gmove2', %i[
       hid_t
       string
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Gunlink", %i[
+    attach_function 'H5Gunlink', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Gget_linkval", %i[
+    attach_function 'H5Gget_linkval', %i[
       hid_t
       string
       size_t
       string
     ], :herr_t
 
-    attach_function "H5Gset_comment", %i[
+    attach_function 'H5Gset_comment', %i[
       hid_t
       string
       string
     ], :herr_t
 
-    attach_function "H5Gget_comment", %i[
+    attach_function 'H5Gget_comment', %i[
       hid_t
       string
       size_t
       string
     ], :int
 
-    attach_function "H5Giterate", %i[
+    attach_function 'H5Giterate', %i[
       hid_t
       string
       pointer
@@ -4462,26 +4462,26 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Gget_num_objs", %i[
+    attach_function 'H5Gget_num_objs', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Gget_objinfo", [
+    attach_function 'H5Gget_objinfo', [
       :hid_t,
       :string,
       :hbool_t,
       H5GStatT.ptr
     ], :herr_t
 
-    attach_function "H5Gget_objname_by_idx", %i[
+    attach_function 'H5Gget_objname_by_idx', %i[
       hid_t
       hsize_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Gget_objtype_by_idx", %i[
+    attach_function 'H5Gget_objtype_by_idx', %i[
       hid_t
       hsize_t
     ], :H5G_obj_t
@@ -4525,78 +4525,78 @@ module HDF5
 
     typedef :anon_enum_71, :H5S_sel_type
 
-    attach_function "H5Sclose", [
+    attach_function 'H5Sclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Scopy", [
+    attach_function 'H5Scopy', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Screate", [
+    attach_function 'H5Screate', [
       :H5S_class_t
     ], :hid_t
 
-    attach_function "H5Screate_simple", %i[
+    attach_function 'H5Screate_simple', %i[
       int
       pointer
       pointer
     ], :hid_t
 
-    attach_function "H5Sdecode", [
+    attach_function 'H5Sdecode', [
       :pointer
     ], :hid_t
 
-    attach_function "H5Sencode", %i[
+    attach_function 'H5Sencode', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Sextent_copy", %i[
+    attach_function 'H5Sextent_copy', %i[
       hid_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Sextent_equal", %i[
+    attach_function 'H5Sextent_equal', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Sget_simple_extent_dims", %i[
+    attach_function 'H5Sget_simple_extent_dims', %i[
       hid_t
       pointer
       pointer
     ], :int
 
-    attach_function "H5Sget_simple_extent_ndims", [
+    attach_function 'H5Sget_simple_extent_ndims', [
       :hid_t
     ], :int
 
-    attach_function "H5Sget_simple_extent_npoints", [
+    attach_function 'H5Sget_simple_extent_npoints', [
       :hid_t
     ], :hssize_t
 
-    attach_function "H5Sget_simple_extent_type", [
+    attach_function 'H5Sget_simple_extent_type', [
       :hid_t
     ], :H5S_class_t
 
-    attach_function "H5Sis_simple", [
+    attach_function 'H5Sis_simple', [
       :hid_t
     ], :htri_t
 
-    attach_function "H5Sset_extent_none", [
+    attach_function 'H5Sset_extent_none', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Sset_extent_simple", %i[
+    attach_function 'H5Sset_extent_simple', %i[
       hid_t
       int
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Scombine_hyperslab", %i[
+    attach_function 'H5Scombine_hyperslab', %i[
       hid_t
       H5S_seloper_t
       pointer
@@ -4605,13 +4605,13 @@ module HDF5
       pointer
     ], :hid_t
 
-    attach_function "H5Scombine_select", %i[
+    attach_function 'H5Scombine_select', %i[
       hid_t
       H5S_seloper_t
       hid_t
     ], :hid_t
 
-    attach_function "H5Sget_regular_hyperslab", %i[
+    attach_function 'H5Sget_regular_hyperslab', %i[
       hid_t
       pointer
       pointer
@@ -4619,79 +4619,79 @@ module HDF5
       pointer
     ], :htri_t
 
-    attach_function "H5Sget_select_bounds", %i[
+    attach_function 'H5Sget_select_bounds', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Sget_select_elem_npoints", [
+    attach_function 'H5Sget_select_elem_npoints', [
       :hid_t
     ], :hssize_t
 
-    attach_function "H5Sget_select_elem_pointlist", %i[
-      hid_t
-      hsize_t
-      hsize_t
-      pointer
-    ], :herr_t
-
-    attach_function "H5Sget_select_hyper_blocklist", %i[
+    attach_function 'H5Sget_select_elem_pointlist', %i[
       hid_t
       hsize_t
       hsize_t
       pointer
     ], :herr_t
 
-    attach_function "H5Sget_select_hyper_nblocks", [
+    attach_function 'H5Sget_select_hyper_blocklist', %i[
+      hid_t
+      hsize_t
+      hsize_t
+      pointer
+    ], :herr_t
+
+    attach_function 'H5Sget_select_hyper_nblocks', [
       :hid_t
     ], :hssize_t
 
-    attach_function "H5Sget_select_npoints", [
+    attach_function 'H5Sget_select_npoints', [
       :hid_t
     ], :hssize_t
 
-    attach_function "H5Sget_select_type", [
+    attach_function 'H5Sget_select_type', [
       :hid_t
     ], :H5S_sel_type
 
-    attach_function "H5Sis_regular_hyperslab", [
+    attach_function 'H5Sis_regular_hyperslab', [
       :hid_t
     ], :htri_t
 
-    attach_function "H5Smodify_select", %i[
+    attach_function 'H5Smodify_select', %i[
       hid_t
       H5S_seloper_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Soffset_simple", %i[
+    attach_function 'H5Soffset_simple', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Sselect_adjust", %i[
+    attach_function 'H5Sselect_adjust', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Sselect_all", [
+    attach_function 'H5Sselect_all', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Sselect_copy", %i[
+    attach_function 'H5Sselect_copy', %i[
       hid_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Sselect_elements", %i[
+    attach_function 'H5Sselect_elements', %i[
       hid_t
       H5S_seloper_t
       size_t
       pointer
     ], :herr_t
 
-    attach_function "H5Sselect_hyperslab", %i[
+    attach_function 'H5Sselect_hyperslab', %i[
       hid_t
       H5S_seloper_t
       pointer
@@ -4700,28 +4700,28 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Sselect_intersect_block", %i[
+    attach_function 'H5Sselect_intersect_block', %i[
       hid_t
       pointer
       pointer
     ], :htri_t
 
-    attach_function "H5Sselect_none", [
+    attach_function 'H5Sselect_none', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Sselect_project_intersection", %i[
+    attach_function 'H5Sselect_project_intersection', %i[
       hid_t
       hid_t
       hid_t
     ], :hid_t
 
-    attach_function "H5Sselect_shape_same", %i[
+    attach_function 'H5Sselect_shape_same', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Sselect_valid", [
+    attach_function 'H5Sselect_valid', [
       :hid_t
     ], :htri_t
 
@@ -4783,19 +4783,19 @@ module HDF5
 
     # H5ZClass2T = H5ZClass2T
 
-    attach_function "H5Zregister", [
+    attach_function 'H5Zregister', [
       :pointer
     ], :herr_t
 
-    attach_function "H5Zunregister", [
+    attach_function 'H5Zunregister', [
       :H5Z_filter_t
     ], :herr_t
 
-    attach_function "H5Zfilter_avail", [
+    attach_function 'H5Zfilter_avail', [
       :H5Z_filter_t
     ], :htri_t
 
-    attach_function "H5Zget_filter_info", %i[
+    attach_function 'H5Zget_filter_info', %i[
       H5Z_filter_t
       pointer
     ], :herr_t
@@ -4936,29 +4936,29 @@ module HDF5
 
     attach_variable :H5P_LST_LINK_ACCESS_ID_g, :H5P_LST_LINK_ACCESS_ID_g, :hid_t
 
-    attach_function "H5Pclose", [
+    attach_function 'H5Pclose', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pclose_class", [
+    attach_function 'H5Pclose_class', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pcopy", [
+    attach_function 'H5Pcopy', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pcopy_prop", %i[
+    attach_function 'H5Pcopy_prop', %i[
       hid_t
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pcreate", [
+    attach_function 'H5Pcreate', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pcreate_class", %i[
+    attach_function 'H5Pcreate_class', %i[
       hid_t
       string
       H5P_cls_create_func_t
@@ -4969,56 +4969,56 @@ module HDF5
       pointer
     ], :hid_t
 
-    attach_function "H5Pdecode", [
+    attach_function 'H5Pdecode', [
       :pointer
     ], :hid_t
 
-    attach_function "H5Pencode", %i[
+    attach_function 'H5Pencode', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pequal", %i[
+    attach_function 'H5Pequal', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Pexist", %i[
+    attach_function 'H5Pexist', %i[
       hid_t
       string
     ], :htri_t
 
-    attach_function "H5Pget", %i[
+    attach_function 'H5Pget', %i[
       hid_t
       string
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_class", [
+    attach_function 'H5Pget_class', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pget_class_name", [
+    attach_function 'H5Pget_class_name', [
       :hid_t
     ], :string
 
-    attach_function "H5Pget_class_parent", [
+    attach_function 'H5Pget_class_parent', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pget_nprops", %i[
+    attach_function 'H5Pget_nprops', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_size", %i[
+    attach_function 'H5Pget_size', %i[
       hid_t
       string
       pointer
     ], :herr_t
 
-    attach_function "H5Pinsert2", %i[
+    attach_function 'H5Pinsert2', %i[
       hid_t
       string
       size_t
@@ -5031,19 +5031,19 @@ module HDF5
       H5P_prp_close_func_t
     ], :herr_t
 
-    attach_function "H5Pisa_class", %i[
+    attach_function 'H5Pisa_class', %i[
       hid_t
       hid_t
     ], :htri_t
 
-    attach_function "H5Piterate", %i[
+    attach_function 'H5Piterate', %i[
       hid_t
       pointer
       H5P_iterate_t
       pointer
     ], :int
 
-    attach_function "H5Pregister2", %i[
+    attach_function 'H5Pregister2', %i[
       hid_t
       string
       size_t
@@ -5057,38 +5057,38 @@ module HDF5
       H5P_prp_close_func_t
     ], :herr_t
 
-    attach_function "H5Premove", %i[
+    attach_function 'H5Premove', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pset", %i[
+    attach_function 'H5Pset', %i[
       hid_t
       string
       pointer
     ], :herr_t
 
-    attach_function "H5Punregister", %i[
+    attach_function 'H5Punregister', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pall_filters_avail", [
+    attach_function 'H5Pall_filters_avail', [
       :hid_t
     ], :htri_t
 
-    attach_function "H5Pget_attr_creation_order", %i[
+    attach_function 'H5Pget_attr_creation_order', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_attr_phase_change", %i[
+    attach_function 'H5Pget_attr_phase_change', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_filter2", %i[
+    attach_function 'H5Pget_filter2', %i[
       hid_t
       uint
       pointer
@@ -5099,7 +5099,7 @@ module HDF5
       pointer
     ], :H5Z_filter_t
 
-    attach_function "H5Pget_filter_by_id2", %i[
+    attach_function 'H5Pget_filter_by_id2', %i[
       hid_t
       H5Z_filter_t
       pointer
@@ -5110,16 +5110,16 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_nfilters", [
+    attach_function 'H5Pget_nfilters', [
       :hid_t
     ], :int
 
-    attach_function "H5Pget_obj_track_times", %i[
+    attach_function 'H5Pget_obj_track_times', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pmodify_filter", %i[
+    attach_function 'H5Pmodify_filter', %i[
       hid_t
       H5Z_filter_t
       uint
@@ -5127,28 +5127,28 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Premove_filter", %i[
+    attach_function 'H5Premove_filter', %i[
       hid_t
       H5Z_filter_t
     ], :herr_t
 
-    attach_function "H5Pset_attr_creation_order", %i[
+    attach_function 'H5Pset_attr_creation_order', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_attr_phase_change", %i[
+    attach_function 'H5Pset_attr_phase_change', %i[
       hid_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_deflate", %i[
+    attach_function 'H5Pset_deflate', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_filter", %i[
+    attach_function 'H5Pset_filter', %i[
       hid_t
       H5Z_filter_t
       uint
@@ -5156,126 +5156,126 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_fletcher32", [
+    attach_function 'H5Pset_fletcher32', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pset_obj_track_times", %i[
+    attach_function 'H5Pset_obj_track_times', %i[
       hid_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pget_file_space_page_size", %i[
+    attach_function 'H5Pget_file_space_page_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_file_space_strategy", %i[
+    attach_function 'H5Pget_file_space_strategy', %i[
       hid_t
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_istore_k", %i[
+    attach_function 'H5Pget_istore_k', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_shared_mesg_index", %i[
+    attach_function 'H5Pget_shared_mesg_index', %i[
       hid_t
       uint
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_shared_mesg_nindexes", %i[
+    attach_function 'H5Pget_shared_mesg_nindexes', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_shared_mesg_phase_change", %i[
-      hid_t
-      pointer
-      pointer
-    ], :herr_t
-
-    attach_function "H5Pget_sizes", %i[
+    attach_function 'H5Pget_shared_mesg_phase_change', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_sym_k", %i[
+    attach_function 'H5Pget_sizes', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_userblock", %i[
+    attach_function 'H5Pget_sym_k', %i[
+      hid_t
+      pointer
+      pointer
+    ], :herr_t
+
+    attach_function 'H5Pget_userblock', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_file_space_page_size", %i[
+    attach_function 'H5Pset_file_space_page_size', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_file_space_strategy", %i[
+    attach_function 'H5Pset_file_space_strategy', %i[
       hid_t
       H5F_fspace_strategy_t
       hbool_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_istore_k", %i[
+    attach_function 'H5Pset_istore_k', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_shared_mesg_index", %i[
+    attach_function 'H5Pset_shared_mesg_index', %i[
       hid_t
       uint
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_shared_mesg_nindexes", %i[
+    attach_function 'H5Pset_shared_mesg_nindexes', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_shared_mesg_phase_change", %i[
+    attach_function 'H5Pset_shared_mesg_phase_change', %i[
       hid_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_sizes", %i[
+    attach_function 'H5Pset_sizes', %i[
       hid_t
       size_t
       size_t
     ], :herr_t
 
-    attach_function "H5Pset_sym_k", %i[
+    attach_function 'H5Pset_sym_k', %i[
       hid_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_userblock", %i[
+    attach_function 'H5Pset_userblock', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pget_alignment", %i[
+    attach_function 'H5Pget_alignment', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_cache", %i[
+    attach_function 'H5Pget_cache', %i[
       hid_t
       pointer
       pointer
@@ -5283,79 +5283,79 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_core_write_tracking", %i[
+    attach_function 'H5Pget_core_write_tracking', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_driver", [
+    attach_function 'H5Pget_driver', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pget_driver_info", [
+    attach_function 'H5Pget_driver_info', [
       :hid_t
     ], :pointer
 
-    attach_function "H5Pget_elink_file_cache_size", %i[
+    attach_function 'H5Pget_elink_file_cache_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_evict_on_close", %i[
+    attach_function 'H5Pget_evict_on_close', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_family_offset", %i[
+    attach_function 'H5Pget_family_offset', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_fclose_degree", %i[
+    attach_function 'H5Pget_fclose_degree', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_file_image", %i[
+    attach_function 'H5Pget_file_image', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_file_image_callbacks", [
+    attach_function 'H5Pget_file_image_callbacks', [
       :hid_t,
       H5FDFileImageCallbacksT.ptr
     ], :herr_t
 
-    attach_function "H5Pget_file_locking", %i[
+    attach_function 'H5Pget_file_locking', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_gc_references", %i[
+    attach_function 'H5Pget_gc_references', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_libver_bounds", %i[
+    attach_function 'H5Pget_libver_bounds', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_mdc_config", [
+    attach_function 'H5Pget_mdc_config', [
       :hid_t,
       H5ACCacheConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Pget_mdc_image_config", [
+    attach_function 'H5Pget_mdc_image_config', [
       :hid_t,
       H5ACCacheImageConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Pget_mdc_log_options", %i[
+    attach_function 'H5Pget_mdc_log_options', %i[
       hid_t
       pointer
       string
@@ -5363,51 +5363,51 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_meta_block_size", %i[
+    attach_function 'H5Pget_meta_block_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_metadata_read_attempts", %i[
+    attach_function 'H5Pget_metadata_read_attempts', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_multi_type", %i[
+    attach_function 'H5Pget_multi_type', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_object_flush_cb", %i[
+    attach_function 'H5Pget_object_flush_cb', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_page_buffer_size", %i[
+    attach_function 'H5Pget_page_buffer_size', %i[
       hid_t
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_sieve_buf_size", %i[
+    attach_function 'H5Pget_sieve_buf_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_small_data_block_size", %i[
+    attach_function 'H5Pget_small_data_block_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_alignment", %i[
+    attach_function 'H5Pset_alignment', %i[
       hid_t
       hsize_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_cache", %i[
+    attach_function 'H5Pset_cache', %i[
       hid_t
       int
       size_t
@@ -5415,148 +5415,148 @@ module HDF5
       double
     ], :herr_t
 
-    attach_function "H5Pset_core_write_tracking", %i[
+    attach_function 'H5Pset_core_write_tracking', %i[
       hid_t
       hbool_t
       size_t
     ], :herr_t
 
-    attach_function "H5Pset_driver", %i[
+    attach_function 'H5Pset_driver', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_elink_file_cache_size", %i[
+    attach_function 'H5Pset_elink_file_cache_size', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_evict_on_close", %i[
+    attach_function 'H5Pset_evict_on_close', %i[
       hid_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pset_family_offset", %i[
+    attach_function 'H5Pset_family_offset', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_fclose_degree", %i[
+    attach_function 'H5Pset_fclose_degree', %i[
       hid_t
       H5F_close_degree_t
     ], :herr_t
 
-    attach_function "H5Pset_file_image", %i[
+    attach_function 'H5Pset_file_image', %i[
       hid_t
       pointer
       size_t
     ], :herr_t
 
-    attach_function "H5Pset_file_image_callbacks", [
+    attach_function 'H5Pset_file_image_callbacks', [
       :hid_t,
       H5FDFileImageCallbacksT.ptr
     ], :herr_t
 
-    attach_function "H5Pset_file_locking", %i[
+    attach_function 'H5Pset_file_locking', %i[
       hid_t
       hbool_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pset_gc_references", %i[
+    attach_function 'H5Pset_gc_references', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_libver_bounds", %i[
+    attach_function 'H5Pset_libver_bounds', %i[
       hid_t
       H5F_libver_t
       H5F_libver_t
     ], :herr_t
 
-    attach_function "H5Pset_mdc_config", [
+    attach_function 'H5Pset_mdc_config', [
       :hid_t,
       H5ACCacheConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Pset_mdc_log_options", %i[
+    attach_function 'H5Pset_mdc_log_options', %i[
       hid_t
       hbool_t
       string
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pset_meta_block_size", %i[
+    attach_function 'H5Pset_meta_block_size', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_metadata_read_attempts", %i[
+    attach_function 'H5Pset_metadata_read_attempts', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_multi_type", %i[
+    attach_function 'H5Pset_multi_type', %i[
       hid_t
       H5FD_mem_t
     ], :herr_t
 
-    attach_function "H5Pset_object_flush_cb", %i[
+    attach_function 'H5Pset_object_flush_cb', %i[
       hid_t
       H5F_flush_cb_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_sieve_buf_size", %i[
+    attach_function 'H5Pset_sieve_buf_size', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Pset_small_data_block_size", %i[
+    attach_function 'H5Pset_small_data_block_size', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_mdc_image_config", [
+    attach_function 'H5Pset_mdc_image_config', [
       :hid_t,
       H5ACCacheImageConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Pset_page_buffer_size", %i[
+    attach_function 'H5Pset_page_buffer_size', %i[
       hid_t
       size_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pfill_value_defined", %i[
+    attach_function 'H5Pfill_value_defined', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_alloc_time", %i[
+    attach_function 'H5Pget_alloc_time', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_chunk", %i[
+    attach_function 'H5Pget_chunk', %i[
       hid_t
       int
       pointer
     ], :int
 
-    attach_function "H5Pget_chunk_opts", %i[
+    attach_function 'H5Pget_chunk_opts', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_dset_no_attrs_hint", %i[
+    attach_function 'H5Pget_dset_no_attrs_hint', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_external", %i[
+    attach_function 'H5Pget_external', %i[
       hid_t
       uint
       size_t
@@ -5565,119 +5565,119 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_external_count", [
+    attach_function 'H5Pget_external_count', [
       :hid_t
     ], :int
 
-    attach_function "H5Pget_fill_time", %i[
+    attach_function 'H5Pget_fill_time', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_fill_value", %i[
+    attach_function 'H5Pget_fill_value', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_layout", [
+    attach_function 'H5Pget_layout', [
       :hid_t
     ], :H5D_layout_t
 
-    attach_function "H5Pget_virtual_count", %i[
+    attach_function 'H5Pget_virtual_count', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_virtual_dsetname", %i[
+    attach_function 'H5Pget_virtual_dsetname', %i[
       hid_t
       size_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_virtual_filename", %i[
+    attach_function 'H5Pget_virtual_filename', %i[
       hid_t
       size_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_virtual_srcspace", %i[
+    attach_function 'H5Pget_virtual_srcspace', %i[
       hid_t
       size_t
     ], :hid_t
 
-    attach_function "H5Pget_virtual_vspace", %i[
+    attach_function 'H5Pget_virtual_vspace', %i[
       hid_t
       size_t
     ], :hid_t
 
-    attach_function "H5Pset_alloc_time", %i[
+    attach_function 'H5Pset_alloc_time', %i[
       hid_t
       H5D_alloc_time_t
     ], :herr_t
 
-    attach_function "H5Pset_chunk", %i[
+    attach_function 'H5Pset_chunk', %i[
       hid_t
       int
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_chunk_opts", %i[
+    attach_function 'H5Pset_chunk_opts', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_dset_no_attrs_hint", %i[
+    attach_function 'H5Pset_dset_no_attrs_hint', %i[
       hid_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pset_external", %i[
+    attach_function 'H5Pset_external', %i[
       hid_t
       string
       off_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_fill_time", %i[
+    attach_function 'H5Pset_fill_time', %i[
       hid_t
       H5D_fill_time_t
     ], :herr_t
 
-    attach_function "H5Pset_fill_value", %i[
+    attach_function 'H5Pset_fill_value', %i[
       hid_t
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_shuffle", [
+    attach_function 'H5Pset_shuffle', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pset_layout", %i[
+    attach_function 'H5Pset_layout', %i[
       hid_t
       H5D_layout_t
     ], :herr_t
 
-    attach_function "H5Pset_nbit", [
+    attach_function 'H5Pset_nbit', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pset_scaleoffset", %i[
+    attach_function 'H5Pset_scaleoffset', %i[
       hid_t
       H5Z_SO_scale_type_t
       int
     ], :herr_t
 
-    attach_function "H5Pset_szip", %i[
+    attach_function 'H5Pset_szip', %i[
       hid_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_virtual", %i[
+    attach_function 'H5Pset_virtual', %i[
       hid_t
       hid_t
       string
@@ -5685,7 +5685,7 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Pget_append_flush", %i[
+    attach_function 'H5Pget_append_flush', %i[
       hid_t
       uint
       pointer
@@ -5693,36 +5693,36 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_chunk_cache", %i[
+    attach_function 'H5Pget_chunk_cache', %i[
       hid_t
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_efile_prefix", %i[
+    attach_function 'H5Pget_efile_prefix', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_virtual_prefix", %i[
+    attach_function 'H5Pget_virtual_prefix', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_virtual_printf_gap", %i[
+    attach_function 'H5Pget_virtual_printf_gap', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_virtual_view", %i[
+    attach_function 'H5Pget_virtual_view', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_append_flush", %i[
+    attach_function 'H5Pset_append_flush', %i[
       hid_t
       uint
       pointer
@@ -5730,72 +5730,72 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_chunk_cache", %i[
+    attach_function 'H5Pset_chunk_cache', %i[
       hid_t
       size_t
       size_t
       double
     ], :herr_t
 
-    attach_function "H5Pset_efile_prefix", %i[
+    attach_function 'H5Pset_efile_prefix', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pset_virtual_prefix", %i[
+    attach_function 'H5Pset_virtual_prefix', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pset_virtual_printf_gap", %i[
+    attach_function 'H5Pset_virtual_printf_gap', %i[
       hid_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pset_virtual_view", %i[
+    attach_function 'H5Pset_virtual_view', %i[
       hid_t
       H5D_vds_view_t
     ], :herr_t
 
-    attach_function "H5Pget_btree_ratios", %i[
+    attach_function 'H5Pget_btree_ratios', %i[
       hid_t
       pointer
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_buffer", %i[
+    attach_function 'H5Pget_buffer', %i[
       hid_t
       pointer
       pointer
     ], :size_t
 
-    attach_function "H5Pget_data_transform", %i[
+    attach_function 'H5Pget_data_transform', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_edc_check", [
+    attach_function 'H5Pget_edc_check', [
       :hid_t
     ], :H5Z_EDC_t
 
-    attach_function "H5Pget_hyper_vector_size", %i[
+    attach_function 'H5Pget_hyper_vector_size', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_preserve", [
+    attach_function 'H5Pget_preserve', [
       :hid_t
     ], :int
 
-    attach_function "H5Pget_type_conv_cb", %i[
+    attach_function 'H5Pget_type_conv_cb', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_vlen_mem_manager", %i[
+    attach_function 'H5Pget_vlen_mem_manager', %i[
       hid_t
       pointer
       pointer
@@ -5803,53 +5803,53 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_btree_ratios", %i[
+    attach_function 'H5Pset_btree_ratios', %i[
       hid_t
       double
       double
       double
     ], :herr_t
 
-    attach_function "H5Pset_buffer", %i[
+    attach_function 'H5Pset_buffer', %i[
       hid_t
       size_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_data_transform", %i[
+    attach_function 'H5Pset_data_transform', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pset_edc_check", %i[
+    attach_function 'H5Pset_edc_check', %i[
       hid_t
       H5Z_EDC_t
     ], :herr_t
 
-    attach_function "H5Pset_filter_callback", %i[
+    attach_function 'H5Pset_filter_callback', %i[
       hid_t
       H5Z_filter_func_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_hyper_vector_size", %i[
+    attach_function 'H5Pset_hyper_vector_size', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Pset_preserve", %i[
+    attach_function 'H5Pset_preserve', %i[
       hid_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pset_type_conv_cb", %i[
+    attach_function 'H5Pset_type_conv_cb', %i[
       hid_t
       H5T_conv_except_func_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_vlen_mem_manager", %i[
+    attach_function 'H5Pset_vlen_mem_manager', %i[
       hid_t
       H5MM_allocate_t
       pointer
@@ -5857,154 +5857,154 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_create_intermediate_group", %i[
+    attach_function 'H5Pget_create_intermediate_group', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_create_intermediate_group", %i[
+    attach_function 'H5Pset_create_intermediate_group', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pget_est_link_info", %i[
+    attach_function 'H5Pget_est_link_info', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_link_creation_order", %i[
+    attach_function 'H5Pget_link_creation_order', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_link_phase_change", %i[
+    attach_function 'H5Pget_link_phase_change', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_local_heap_size_hint", %i[
+    attach_function 'H5Pget_local_heap_size_hint', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_est_link_info", %i[
-      hid_t
-      uint
-      uint
-    ], :herr_t
-
-    attach_function "H5Pset_link_creation_order", %i[
-      hid_t
-      uint
-    ], :herr_t
-
-    attach_function "H5Pset_link_phase_change", %i[
+    attach_function 'H5Pset_est_link_info', %i[
       hid_t
       uint
       uint
     ], :herr_t
 
-    attach_function "H5Pset_local_heap_size_hint", %i[
+    attach_function 'H5Pset_link_creation_order', %i[
+      hid_t
+      uint
+    ], :herr_t
+
+    attach_function 'H5Pset_link_phase_change', %i[
+      hid_t
+      uint
+      uint
+    ], :herr_t
+
+    attach_function 'H5Pset_local_heap_size_hint', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Pget_char_encoding", %i[
+    attach_function 'H5Pget_char_encoding', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_char_encoding", %i[
+    attach_function 'H5Pset_char_encoding', %i[
       hid_t
       H5T_cset_t
     ], :herr_t
 
-    attach_function "H5Pget_elink_acc_flags", %i[
+    attach_function 'H5Pget_elink_acc_flags', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_elink_cb", %i[
+    attach_function 'H5Pget_elink_cb', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_elink_fapl", [
+    attach_function 'H5Pget_elink_fapl', [
       :hid_t
     ], :hid_t
 
-    attach_function "H5Pget_elink_prefix", %i[
+    attach_function 'H5Pget_elink_prefix', %i[
       hid_t
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5Pget_nlinks", %i[
+    attach_function 'H5Pget_nlinks', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_elink_acc_flags", %i[
+    attach_function 'H5Pset_elink_acc_flags', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_elink_cb", %i[
+    attach_function 'H5Pset_elink_cb', %i[
       hid_t
       H5L_elink_traverse_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_elink_fapl", %i[
+    attach_function 'H5Pset_elink_fapl', %i[
       hid_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Pset_elink_prefix", %i[
+    attach_function 'H5Pset_elink_prefix', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pset_nlinks", %i[
+    attach_function 'H5Pset_nlinks', %i[
       hid_t
       size_t
     ], :herr_t
 
-    attach_function "H5Padd_merge_committed_dtype_path", %i[
+    attach_function 'H5Padd_merge_committed_dtype_path', %i[
       hid_t
       string
     ], :herr_t
 
-    attach_function "H5Pfree_merge_committed_dtype_paths", [
+    attach_function 'H5Pfree_merge_committed_dtype_paths', [
       :hid_t
     ], :herr_t
 
-    attach_function "H5Pget_copy_object", %i[
+    attach_function 'H5Pget_copy_object', %i[
       hid_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pget_mcdt_search_cb", %i[
+    attach_function 'H5Pget_mcdt_search_cb', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_copy_object", %i[
+    attach_function 'H5Pset_copy_object', %i[
       hid_t
       uint
     ], :herr_t
 
-    attach_function "H5Pset_mcdt_search_cb", %i[
+    attach_function 'H5Pset_mcdt_search_cb', %i[
       hid_t
       H5O_mcdt_search_cb_t
       pointer
     ], :herr_t
 
-    attach_function "H5Pregister1", %i[
+    attach_function 'H5Pregister1', %i[
       hid_t
       string
       size_t
@@ -6017,7 +6017,7 @@ module HDF5
       H5P_prp_close_func_t
     ], :herr_t
 
-    attach_function "H5Pinsert1", %i[
+    attach_function 'H5Pinsert1', %i[
       hid_t
       string
       size_t
@@ -6029,7 +6029,7 @@ module HDF5
       H5P_prp_close_func_t
     ], :herr_t
 
-    attach_function "H5Pget_filter1", %i[
+    attach_function 'H5Pget_filter1', %i[
       hid_t
       uint
       pointer
@@ -6039,7 +6039,7 @@ module HDF5
       string
     ], :H5Z_filter_t
 
-    attach_function "H5Pget_filter_by_id1", %i[
+    attach_function 'H5Pget_filter_by_id1', %i[
       hid_t
       H5Z_filter_t
       pointer
@@ -6049,7 +6049,7 @@ module HDF5
       string
     ], :herr_t
 
-    attach_function "H5Pget_version", %i[
+    attach_function 'H5Pget_version', %i[
       hid_t
       pointer
       pointer
@@ -6057,13 +6057,13 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_file_space", %i[
+    attach_function 'H5Pset_file_space', %i[
       hid_t
       H5F_file_space_type_t
       hsize_t
     ], :herr_t
 
-    attach_function "H5Pget_file_space", %i[
+    attach_function 'H5Pget_file_space', %i[
       hid_t
       pointer
       pointer
@@ -6077,43 +6077,43 @@ module HDF5
 
     typedef :H5PL_type_t, :H5PL_type_t
 
-    attach_function "H5PLset_loading_state", [
+    attach_function 'H5PLset_loading_state', [
       :uint
     ], :herr_t
 
-    attach_function "H5PLget_loading_state", [
+    attach_function 'H5PLget_loading_state', [
       :pointer
     ], :herr_t
 
-    attach_function "H5PLappend", [
+    attach_function 'H5PLappend', [
       :string
     ], :herr_t
 
-    attach_function "H5PLprepend", [
+    attach_function 'H5PLprepend', [
       :string
     ], :herr_t
 
-    attach_function "H5PLreplace", %i[
+    attach_function 'H5PLreplace', %i[
       string
       uint
     ], :herr_t
 
-    attach_function "H5PLinsert", %i[
+    attach_function 'H5PLinsert', %i[
       string
       uint
     ], :herr_t
 
-    attach_function "H5PLremove", [
+    attach_function 'H5PLremove', [
       :uint
     ], :herr_t
 
-    attach_function "H5PLget", %i[
+    attach_function 'H5PLget', %i[
       uint
       string
       size_t
     ], :ssize_t
 
-    attach_function "H5PLsize", [
+    attach_function 'H5PLsize', [
       :pointer
     ], :herr_t
 
@@ -6130,7 +6130,7 @@ module HDF5
 
     typedef :pointer, :hdset_reg_ref_t
 
-    attach_function "H5Rcreate", %i[
+    attach_function 'H5Rcreate', %i[
       pointer
       hid_t
       string
@@ -6138,27 +6138,27 @@ module HDF5
       hid_t
     ], :herr_t
 
-    attach_function "H5Rdereference2", %i[
+    attach_function 'H5Rdereference2', %i[
       hid_t
       hid_t
       H5R_type_t
       pointer
     ], :hid_t
 
-    attach_function "H5Rget_region", %i[
+    attach_function 'H5Rget_region', %i[
       hid_t
       H5R_type_t
       pointer
     ], :hid_t
 
-    attach_function "H5Rget_obj_type2", %i[
+    attach_function 'H5Rget_obj_type2', %i[
       hid_t
       H5R_type_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5Rget_name", %i[
+    attach_function 'H5Rget_name', %i[
       hid_t
       H5R_type_t
       pointer
@@ -6166,41 +6166,41 @@ module HDF5
       size_t
     ], :ssize_t
 
-    attach_function "H5Rget_obj_type1", %i[
+    attach_function 'H5Rget_obj_type1', %i[
       hid_t
       H5R_type_t
       pointer
     ], :H5G_obj_t
 
-    attach_function "H5Rdereference1", %i[
+    attach_function 'H5Rdereference1', %i[
       hid_t
       H5R_type_t
       pointer
     ], :hid_t
 
-    attach_function "H5FD_core_init", [], :hid_t
+    attach_function 'H5FD_core_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_core", %i[
+    attach_function 'H5Pset_fapl_core', %i[
       hid_t
       size_t
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pget_fapl_core", %i[
+    attach_function 'H5Pget_fapl_core', %i[
       hid_t
       pointer
       pointer
     ], :herr_t
 
-    attach_function "H5FD_family_init", [], :hid_t
+    attach_function 'H5FD_family_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_family", %i[
+    attach_function 'H5Pset_fapl_family', %i[
       hid_t
       hsize_t
       hid_t
     ], :herr_t
 
-    attach_function "H5Pget_fapl_family", %i[
+    attach_function 'H5Pget_fapl_family', %i[
       hid_t
       pointer
       pointer
@@ -6218,21 +6218,21 @@ module HDF5
 
     # H5FDHdfsFaplT = H5FDHdfsFaplT
 
-    attach_function "H5FD_hdfs_init", [], :hid_t
+    attach_function 'H5FD_hdfs_init', [], :hid_t
 
-    attach_function "H5Pget_fapl_hdfs", [
+    attach_function 'H5Pget_fapl_hdfs', [
       :hid_t,
       H5FDHdfsFaplT.ptr
     ], :herr_t
 
-    attach_function "H5Pset_fapl_hdfs", [
+    attach_function 'H5Pset_fapl_hdfs', [
       :hid_t,
       H5FDHdfsFaplT.ptr
     ], :herr_t
 
-    attach_function "H5FD_log_init", [], :hid_t
+    attach_function 'H5FD_log_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_log", %i[
+    attach_function 'H5Pset_fapl_log', %i[
       hid_t
       string
       ulong_long
@@ -6261,9 +6261,9 @@ module HDF5
 
     typedef :H5FD_mpio_collective_opt_t, :H5FD_mpio_collective_opt_t
 
-    attach_function "H5FD_multi_init", [], :hid_t
+    attach_function 'H5FD_multi_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_multi", %i[
+    attach_function 'H5Pset_fapl_multi', %i[
       hid_t
       pointer
       pointer
@@ -6272,7 +6272,7 @@ module HDF5
       hbool_t
     ], :herr_t
 
-    attach_function "H5Pget_fapl_multi", %i[
+    attach_function 'H5Pget_fapl_multi', %i[
       hid_t
       pointer
       pointer
@@ -6281,7 +6281,7 @@ module HDF5
       pointer
     ], :herr_t
 
-    attach_function "H5Pset_fapl_split", %i[
+    attach_function 'H5Pset_fapl_split', %i[
       hid_t
       string
       hid_t
@@ -6300,21 +6300,21 @@ module HDF5
 
     # H5FDRos3FaplT = H5FDRos3FaplT
 
-    attach_function "H5FD_ros3_init", [], :hid_t
+    attach_function 'H5FD_ros3_init', [], :hid_t
 
-    attach_function "H5Pget_fapl_ros3", [
+    attach_function 'H5Pget_fapl_ros3', [
       :hid_t,
       H5FDRos3FaplT.ptr
     ], :herr_t
 
-    attach_function "H5Pset_fapl_ros3", [
+    attach_function 'H5Pset_fapl_ros3', [
       :hid_t,
       H5FDRos3FaplT.ptr
     ], :herr_t
 
-    attach_function "H5FD_sec2_init", [], :hid_t
+    attach_function 'H5FD_sec2_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_sec2", [
+    attach_function 'H5Pset_fapl_sec2', [
       :hid_t
     ], :herr_t
 
@@ -6331,21 +6331,21 @@ module HDF5
 
     # H5FDSplitterVfdConfigT = H5FDSplitterVfdConfigT
 
-    attach_function "H5FD_splitter_init", [], :hid_t
+    attach_function 'H5FD_splitter_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_splitter", [
+    attach_function 'H5Pset_fapl_splitter', [
       :hid_t,
       H5FDSplitterVfdConfigT.ptr
     ], :herr_t
 
-    attach_function "H5Pget_fapl_splitter", [
+    attach_function 'H5Pget_fapl_splitter', [
       :hid_t,
       H5FDSplitterVfdConfigT.ptr
     ], :herr_t
 
-    attach_function "H5FD_stdio_init", [], :hid_t
+    attach_function 'H5FD_stdio_init', [], :hid_t
 
-    attach_function "H5Pset_fapl_stdio", [
+    attach_function 'H5Pset_fapl_stdio', [
       :hid_t
     ], :herr_t
   end
