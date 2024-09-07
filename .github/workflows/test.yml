@@ -1,0 +1,34 @@
+name: test
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    name: ${{ matrix.os }} ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        os: [ubuntu, macos]
+        ruby: [3.2, 3.3]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - if: matrix.os == 'ubuntu'
+        name: Install hdf5 - Ubuntu
+        run: sudo apt-get install libhdf5-dev
+      - if: matrix.os == 'macos'
+        name: Install hdf5 - MacOS
+        run: brew install hdf5@1.10
+      - if: matrix.os == 'ubuntu'
+        name: Run test - Ubuntu
+        run: bundle exec rake test
+      - if: matrix.os == 'macos'
+        name: Run test - MacOS
+        run: bundle exec rake test
+        env:
+          HDF5_LIB_PATH: /opt/homebrew/Cellar/hdf5@1.10/1.10.11/lib

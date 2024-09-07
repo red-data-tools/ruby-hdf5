@@ -9,10 +9,9 @@ module HDF5
   class << self
     attr_accessor :lib_path
 
-    def search_hdf5lib(name = nil)
-      return File.expand_path(name, ENV['HDF5_LIB_PATH']) if ENV['HDF5_LIB_PATH']
-
+    def search_hdf5lib
       name = "libhdf5.#{FFI::Platform::LIBSUFFIX}"
+      return File.expand_path(name, ENV['HDF5_LIB_PATH']) if ENV['HDF5_LIB_PATH']
 
       begin
         require 'pkg-config'
