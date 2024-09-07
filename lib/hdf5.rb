@@ -33,3 +33,7 @@ module HDF5
 end
 
 require_relative 'hdf5/ffi3'
+
+require_relative 'hdf5/file'
+require_relative 'hdf5/group'
+require_relative 'hdf5/dataset'
