@@ -231,29 +231,29 @@ module HDF5
 
     typedef :int, :register_t
 
-    attach_function '__bswap_16', [
-      :__uint16_t
-    ], :__uint16_t
+    # attach_function '__bswap_16', [
+    #   :__uint16_t
+    # ], :__uint16_t
 
-    attach_function '__bswap_32', [
-      :__uint32_t
-    ], :__uint32_t
+    # attach_function '__bswap_32', [
+    #   :__uint32_t
+    # ], :__uint32_t
 
-    attach_function '__bswap_64', [
-      :__uint64_t
-    ], :__uint64_t
+    # attach_function '__bswap_64', [
+    #   :__uint64_t
+    # ], :__uint64_t
 
-    attach_function '__uint16_identity', [
-      :__uint16_t
-    ], :__uint16_t
+    # attach_function '__uint16_identity', [
+    #   :__uint16_t
+    # ], :__uint16_t
 
-    attach_function '__uint32_identity', [
-      :__uint32_t
-    ], :__uint32_t
+    # attach_function '__uint32_identity', [
+    #   :__uint32_t
+    # ], :__uint32_t
 
-    attach_function '__uint64_identity', [
-      :__uint64_t
-    ], :__uint64_t
+    # attach_function '__uint64_identity', [
+    #   :__uint64_t
+    # ], :__uint64_t
 
     class Anon_Type_2 < ::FFI::Struct
       layout \
@@ -6348,5 +6348,30 @@ module HDF5
     attach_function 'H5Pset_fapl_stdio', [
       :hid_t
     ], :herr_t
+
+    # These variables are defined manually because c2ffi can't parse them
+
+    attach_variable :H5T_NATIVE_SCHAR, :H5T_NATIVE_SCHAR_g, :hid_t
+    attach_variable :H5T_NATIVE_UCHAR, :H5T_NATIVE_UCHAR_g, :hid_t
+    attach_variable :H5T_NATIVE_SHORT, :H5T_NATIVE_SHORT_g, :hid_t
+    attach_variable :H5T_NATIVE_USHORT, :H5T_NATIVE_USHORT_g, :hid_t
+    attach_variable :H5T_NATIVE_INT, :H5T_NATIVE_INT_g, :hid_t
+    attach_variable :H5T_NATIVE_UINT, :H5T_NATIVE_UINT_g, :hid_t
+    attach_variable :H5T_NATIVE_LONG, :H5T_NATIVE_LONG_g, :hid_t
+    attach_variable :H5T_NATIVE_ULONG, :H5T_NATIVE_ULONG_g, :hid_t
+    attach_variable :H5T_NATIVE_LLONG, :H5T_NATIVE_LLONG_g, :hid_t
+    attach_variable :H5T_NATIVE_ULLONG, :H5T_NATIVE_ULLONG_g, :hid_t
+    attach_variable :H5T_NATIVE_FLOAT, :H5T_NATIVE_FLOAT_g, :hid_t
+    attach_variable :H5T_NATIVE_DOUBLE, :H5T_NATIVE_DOUBLE_g, :hid_t
+    attach_variable :H5T_NATIVE_LDOUBLE, :H5T_NATIVE_LDOUBLE_g, :hid_t
+    attach_variable :H5T_NATIVE_HADDR, :H5T_NATIVE_HADDR_g, :hid_t
+    attach_variable :H5T_NATIVE_HSIZE, :H5T_NATIVE_HSIZE_g, :hid_t
+    attach_variable :H5T_NATIVE_HSSIZE, :H5T_NATIVE_HSSIZE_g, :hid_t
+    attach_variable :H5T_NATIVE_HERR, :H5T_NATIVE_HERR_g, :hid_t
+    attach_variable :H5T_NATIVE_HBOOL, :H5T_NATIVE_HBOOL_g, :hid_t
+    attach_variable :H5T_C_S1, :H5T_C_S1_g, :hid_t
+
+    SIZE_MAX = (1 << (::FFI::MemoryPointer.new(:size_t).size * 8)) - 1
+    H5T_VARIABLE = SIZE_MAX
   end
 end

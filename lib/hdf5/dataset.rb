@@ -32,21 +32,39 @@ module HDF5
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
     end
 
-    # def read
-    #   dtype = dtype()
-    #   shape = shape()
+    def read
+      dtype = dtype()
+      shape = shape()
 
-    #   total_elements = shape.inject(:*)
-    #   case dtype
-    #   when :H5T_INTEGER
-    #     read_integer_data(total_elements)
-    #   when :H5T_FLOAT
-    #     read_float_data(total_elements)
-    #   when :H5T_STRING
-    #     read_string_data(total_elements)
-    #   else
-    #     raise 'Unsupported datatype'
-    #   end
-    # end
+      total_elements = shape.inject(:*)
+      case dtype
+      when :H5T_INTEGER
+        read_integer_data(total_elements)
+      when :H5T_FLOAT
+        read_float_data(total_elements)
+      when :H5T_STRING
+        read_string_data(total_elements)
+      else
+        raise 'Unsupported datatype'
+      end
+    end
+
+    def read_integer_data(total_elements)
+      buffer = ::FFI::MemoryPointer.new(:int, total_elements)
+      mem_type_id = HDF5::FFI.H5T_NATIVE_INT
+      HDF5::FFI.H5Dread(@dataset_id, mem_type_id, 0, 0, 0, buffer)
+      buffer.read_array_of_int(total_elements)
+    end
+
+    def read_float_data(total_elements)
+      buffer = ::FFI::MemoryPointer.new(:float, total_elements)
+      mem_type_id = HDF5::FFI.H5T_NATIVE_FLOAT
+      HDF5::FFI.H5Dread(@dataset_id, mem_type_id, 0, 0, 0, buffer)
+      buffer.read_array_of_float(total_elements)
+    end
+
+    def read_string_data(total_elements)
+      raise NotImplementedError
+    end
   end
 end
