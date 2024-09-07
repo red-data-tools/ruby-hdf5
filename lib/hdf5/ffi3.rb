@@ -2941,37 +2941,6 @@ module HDF5
 
     typedef :long_double, :_Float64x
 
-    attach_function 'fscanf', [
-      FILE.ptr,
-      :string
-    ], :int
-
-    attach_function 'scanf', [
-      :string
-    ], :int
-
-    attach_function 'sscanf', %i[
-      string
-      string
-    ], :int
-
-    attach_function 'vfscanf', [
-      FILE.ptr,
-      :string,
-      :__gnuc_va_list
-    ], :int
-
-    attach_function 'vscanf', %i[
-      string
-      __gnuc_va_list
-    ], :int
-
-    attach_function 'vsscanf', %i[
-      string
-      string
-      __gnuc_va_list
-    ], :int
-
     attach_function 'vfscanf', [
       FILE.ptr,
       :string,
