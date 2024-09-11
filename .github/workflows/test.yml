@@ -23,12 +23,6 @@ jobs:
         run: sudo apt-get install libhdf5-dev
       - if: matrix.os == 'macos'
         name: Install hdf5 - MacOS
-        run: brew install hdf5@1.10
-      - if: matrix.os == 'ubuntu'
-        name: Run test - Ubuntu
+        run: brew install hdf5
+      - name: Run test
         run: bundle exec rake test
-      - if: matrix.os == 'macos'
-        name: Run test - MacOS
-        run: bundle exec rake test
-        env:
-          HDF5_LIB_PATH: /opt/homebrew/Cellar/hdf5@1.10/1.10.11/lib
