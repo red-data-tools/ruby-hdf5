@@ -15,7 +15,13 @@ module HDF5
         datasets << name
         0 # continue
       end
-      status = HDF5::FFI.H5Literate(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+
+      case HDF5::FFI::MiV
+      when 10
+        status = HDF5::FFI.H5Literate(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+      when 14
+        status = HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+      end
       raise 'Failed to list datasets' if status < 0
 
       datasets
@@ -34,15 +40,33 @@ module HDF5
     private
 
     def group?(name)
-      info = HDF5::FFI::H5OInfoT.new
-      HDF5::FFI.H5Oget_info_by_name(@group_id, name, info, 0)
-      info[:type] == :H5O_TYPE_GROUP
+      case HDF5::FFI::MiV
+      when 10
+        info = HDF5::FFI::H5OInfoT.new
+        HDF5::FFI.H5Oget_info_by_name(@group_id, name, info, 0)
+        info[:type] == :H5O_TYPE_GROUP
+      when 14
+        info = HDF5::FFI::H5OInfo1T.new
+        HDF5::FFI.H5Oget_info_by_name1(@group_id, name, info, 0)
+        info[:type] == :H5O_TYPE_GROUP
+      else
+        raise 'This should not happen'
+      end
     end
 
     def dataset?(name)
-      info = HDF5::FFI::H5OInfoT.new
-      HDF5::FFI.H5Oget_info_by_name(@group_id, name, info, 0)
-      info[:type] == :H5O_TYPE_DATASET
+      case HDF5::FFI::MiV
+      when 10
+        info = HDF5::FFI::H5OInfoT.new
+        HDF5::FFI.H5Oget_info_by_name(@group_id, name, info, 0)
+        info[:type] == :H5O_TYPE_DATASET
+      when 14
+        info = HDF5::FFI::H5OInfo1T.new
+        HDF5::FFI.H5Oget_info_by_name1(@group_id, name, info, 0)
+        info[:type] == :H5O_TYPE_DATASET
+      else
+        raise 'This should not happen'
+      end
     end
   end
 end

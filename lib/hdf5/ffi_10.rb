@@ -1,28 +1,8 @@
+# require_relative 'ffi'
+
 module HDF5
   module FFI
-    extend ::FFI::Library
-
-    begin
-      ffi_lib HDF5.lib_path
-    rescue LoadError => e
-      raise LoadError, "#{e}\nCould not find #{HDF5.lib_path}"
-    end
-
-    # @!macro attach_function
-    #   @!scope class
-    #   @!method $1(${2--2})
-    #   @return [${-1}] the return value of $0
-    def self.attach_function(*)
-      super
-    rescue ::FFI::NotFoundError => e
-      warn e.message # if $VERBOSE
-    end
-
-    def self.attach_variable(*)
-      super
-    rescue ::FFI::NotFoundError => e
-      warn e.message # if $VERBOSE
-    end
+    MiV = 10
 
     typedef :uchar, :__u_char
 
@@ -663,11 +643,11 @@ module HDF5
       H5AllocStatsT.ptr
     ], :herr_t
 
-    attach_function 'H5get_libversion', %i[
-      pointer
-      pointer
-      pointer
-    ], :herr_t
+    # attach_function 'H5get_libversion', %i[
+    #   pointer
+    #   pointer
+    #   pointer
+    # ], :herr_t
 
     attach_function 'H5check_version', %i[
       uint

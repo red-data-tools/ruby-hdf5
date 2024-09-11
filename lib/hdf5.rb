@@ -24,14 +24,14 @@ module HDF5
       end
       return lib_path if File.exist?(lib_path)
 
-      warn "htslib shared library '#{name}' not found."
+      warn "hdf5 shared library '#{name}' not found."
     end
   end
 
   self.lib_path = search_hdf5lib
 end
 
-require_relative 'hdf5/ffi3'
+require_relative 'hdf5/ffi'
 
 require_relative 'hdf5/file'
 require_relative 'hdf5/group'

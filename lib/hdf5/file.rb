@@ -25,7 +25,13 @@ module HDF5
         0 # continue
       end
 
-      status = HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+      case FFI::MiV
+      when 10
+        status = HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+      when 14
+        status = HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+      end
+
       raise 'Failed to iterate over file entries' if status < 0
 
       list
@@ -44,15 +50,33 @@ module HDF5
     private
 
     def group?(name)
-      info = HDF5::FFI::H5OInfoT.new
-      HDF5::FFI.H5Oget_info_by_name(@file_id, name, info, 0)
-      info[:type] == :H5O_TYPE_GROUP
+      case FFI::MiV
+      when 10
+        info = HDF5::FFI::H5OInfoT.new
+        HDF5::FFI.H5Oget_info_by_name(@file_id, name, info, 0)
+        info[:type] == :H5O_TYPE_GROUP
+      when 14
+        info = HDF5::FFI::H5OInfo1T.new
+        HDF5::FFI.H5Oget_info_by_name1(@file_id, name, info, 0)
+        info[:type] == :H5O_TYPE_GROUP
+      else
+        raise 'This should not happen'
+      end
     end
 
     def dataset?(name)
-      info = HDF5::FFI::H5OInfoT.new
-      HDF5::FFI.H5Oget_info_by_name(@file_id, name, info, 0)
-      info[:type] == :H5O_TYPE_DATASET
+      case FFI::MiV
+      when 10
+        info = HDF5::FFI::H5OInfoT.new
+        HDF5::FFI.H5Oget_info_by_name(@file_id, name, info, 0)
+        info[:type] == :H5O_TYPE_DATASET
+      when 14
+        info = HDF5::FFI::H5OInfo1T.new
+        HDF5::FFI.H5Oget_info_by_name1(@file_id, name, info, 0)
+        info[:type] == :H5O_TYPE_DATASET
+      else
+        raise 'This should not happen'
+      end
     end
   end
 end
