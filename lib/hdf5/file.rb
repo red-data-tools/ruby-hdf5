@@ -28,7 +28,7 @@ module HDF5
       case FFI::MiV
       when 10 then HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
       when 14 then HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-      end < 0 && raise('Failed to iterate over file entries')
+      end.negative? && raise('Failed to iterate over file entries')
 
       list
     end
