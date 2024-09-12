@@ -13,12 +13,12 @@ Gem::Specification.new do |spec|
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.2.0'
 
-  spec.files         = Dir["*.{md,txt}", "{lib}/**/*", "vendor/*.{so,dylib,dll}"]
-  spec.require_path  = "lib"
+  spec.files         = Dir['*.{md,txt}', '{lib}/**/*', 'vendor/*.{so,dylib,dll}']
+  spec.require_path  = 'lib'
   spec.require_paths = ['lib']
 
   spec.add_dependency 'ffi'
   spec.add_dependency 'pkg-config'
 
-  spec.metadata["msys2_mingw_dependencies"] = "hdf5"
+  spec.metadata['msys2_mingw_dependencies'] = 'hdf5'
 end
