@@ -43,6 +43,10 @@ module HDF5
       end
     end
 
+    def attrs
+      @attrs ||= AttributeManager.new(@file_id)
+    end
+
     private
 
     def group?(name)

@@ -4,6 +4,10 @@ module HDF5
       @dataset_id = HDF5::FFI.H5Dopen1(parent_id, name)
     end
 
+    def attrs
+      @attrs ||= AttributeManager.new(@dataset_id)
+    end
+
     def write(data)
       HDF5::FFI.H5Dwrite(@dataset_id, data)
     end
