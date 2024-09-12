@@ -22,13 +22,21 @@ c2ffi $(pkg-config --cflags-only-I hdf5 | ruby -npe '$_.strip!.gsub!(/-I/, "")<<
 c2ffi4rb hdf5.json > lib/hdf5/ffi.rb
 ```
 
-The auto-generated bindings require some minor manual modifications, see the end of the ffi3.rb file.
+The auto-generated bindings require some minor manual modifications.
 
-### HDF5 1.10 or 1.14
+### Pull Request Review and Merge
 
-Compatibility issues between versions of HDF5
+The HDF5 Ruby bindings have not been created or maintained for a long time. This means there are very few people in the Ruby community who can create or maintain these bindings. In other words, the history shows that the Ruby community does not have enough time and resources to keep ruby-hdf5 at a high quality.
 
-Several functions in HDF5 are incompatible between 1.10 and 1.14 (the latest version at the time of writing). The current version of ruby-hdf5 is compliant with 1.10. This is because the latest version of the Ubuntu package is 1.10. However, 1.14 is already distributed with homebrew and 1.10 will be removed during 2025. It will need to be rewritten for 1.14 in the near future.
+Because of this situation, we have set the review standards for pull requests **very low** in this project. Specifically, we will **always** merge a pull request unless it contains harmful changes. Even if there are small bugs, we will merge it as long as there are no serious issues. This is because the author can send more pull requests to fix the bugs later. If we don’t merge, nothing will move forward. The time and effort to write and test code are very valuable.
+
+In this project, we do not focus on keeping the code perfectly clean and bug-free. This may seem unusual for a library like HDF5, which handles numbers and data. But the common quality-first approach approach only works when there are enough developers and time. We intentionally avoid this in ruby-hdf5.
+
+In ruby-hdf5, we focus more on keeping the project alive than making the code perfect at a certain point. Like how different organisms adapt to different light environments, the development strategy should change based on the community’s situation.
+
+## Acknowledgement
+
+https://github.com/edmundhighcock/hdf5
 
 ## License
 
