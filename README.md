@@ -24,19 +24,24 @@ c2ffi4rb hdf5.json > lib/hdf5/ffi.rb
 
 The auto-generated bindings require some minor manual modifications.
 
-### Pull Request Review and Merge
+### 　Development Strategy
 
-The HDF5 Ruby bindings have not been created or maintained for a long time. This means there are very few people in the Ruby community who can create or maintain these bindings. In other words, the history shows that the Ruby community does not have enough time and resources to keep ruby-hdf5 at a high quality.
+#### All pull requests will be merged
 
-Because of this situation, we have set the review standards for pull requests **very low** in this project. Specifically, we will **always** merge a pull request unless it contains harmful changes. Even if there are small bugs, we will merge it as long as there are no serious issues. This is because the author can send more pull requests to fix the bugs later. If we don’t merge, nothing will move forward. The time and effort to write and test code are very valuable.
+- All pull requests received will be merged unless there is detrimental code.
+- If the pull request contains a bug, it still will be merged.
+- The author can add a commit to the pull request or send another pull request to fix the bug later.
 
-In this project, we do not focus on keeping the code perfectly clean and bug-free. This may seem unusual for a library like HDF5, which handles numbers and data. But the common quality-first approach approach only works when there are enough developers and time. We intentionally avoid this in ruby-hdf5.
+#### Why are all pull requests merged?
 
-In ruby-hdf5, we focus more on keeping the project alive than making the code perfect at a certain point. Like how different organisms adapt to different light environments, the development strategy should change based on the community’s situation.
+- We prioritise the sustainable development or maintainance of the projects over keeping high code quality.
+- High code quality is important to keep developers and users motivated.
+- However, it is a historical fact that the HDF5 binding has not been created and maintained by the Ruby community for a long time.
+- This situation of extremely low developer density requires unusual strategies to maintain the project.
 
 ## Acknowledgement
 
-https://github.com/edmundhighcock/hdf5
+[https://github.com/edmundhighcock/hdf5](https://github.com/edmundhighcock/hdf5)
 
 ## License
 
