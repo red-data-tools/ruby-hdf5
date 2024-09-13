@@ -30,14 +30,16 @@ The auto-generated bindings require some minor manual modifications.
 
 - All pull requests received will be merged unless there is detrimental code.
 - If the pull request contains a bug, it still will be merged.
+- The author can add a comment that there is a bug here, or revert the commit if the bug is critical.
 - The author can add a commit to the pull request or send another pull request to fix the bug later.
 
 #### Why are all pull requests merged?
 
-- We prioritise the sustainable development or maintainance of the projects over keeping high code quality.
-- High code quality is important to keep developers and users motivated.
-- However, it is a historical fact that the HDF5 binding has not been created and maintained by the Ruby community for a long time.
-- This situation of extremely low developer density requires unusual strategies to maintain the project.
+- Development is a transition of code states.
+- We pay more attention to transient events, the probability that new commitments will continue to occur, than to the quality of the code at a given point in time.
+- Usually, High code quality is important to keep developers and users motivated.
+- However, HDF5 binding for Ruby has not been maintained for a long time.
+- This situation means that developer density is low and requires unusual strategies to maintain the project.
 
 ## Acknowledgement
 
