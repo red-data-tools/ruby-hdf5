@@ -24,7 +24,7 @@ c2ffi4rb hdf5.json > lib/hdf5/ffi.rb
 
 The auto-generated bindings require some minor manual modifications.
 
-### 　Development Strategy
+### Development Strategy
 
 #### All pull requests will be merged
 
