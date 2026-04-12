@@ -1,40 +1,7 @@
 module HDF5
   class Dataset
-    class << self
-      def create(parent_id, name, data)
-        values = normalize_data(data)
-        dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
-        dims.write_array_of_ulong_long([values.length])
-        datatype_id = datatype_id_for(values)
-        dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
-        raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
-
-        dataset = from_id(
-          HDF5::FFI.H5Dcreate2(parent_id, name, datatype_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
-                               HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
-        )
-        dataset.write(values)
-        return dataset unless block_given?
-
-        begin
-          yield dataset
-        ensure
-          dataset.close
-        end
-      ensure
-        HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
-      end
-
-      def open(parent_id, name)
-        dataset = from_id(HDF5::FFI.H5Dopen2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
-        return dataset unless block_given?
-
-        begin
-          yield dataset
-        ensure
-          dataset.close
-        end
-      end
+    module DataHelpers
+      module_function
 
       def normalize_data(data)
         values = data.is_a?(Array) ? data : [data]
@@ -82,8 +49,45 @@ module HDF5
         raise HDF5::Error,
               "Integer value #{out_of_range} is outside native int range (#{min}..#{max}). Use a smaller value."
       end
+    end
 
-      private :normalize_data, :datatype_id_for, :buffer_for, :native_int_bounds, :validate_native_int_range!
+    private_constant :DataHelpers
+
+    class << self
+      def create(parent_id, name, data)
+        values = DataHelpers.normalize_data(data)
+        dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
+        dims.write_array_of_ulong_long([values.length])
+        datatype_id = DataHelpers.datatype_id_for(values)
+        dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
+        raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
+
+        dataset = from_id(
+          HDF5::FFI.H5Dcreate2(parent_id, name, datatype_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
+                               HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
+        )
+        dataset.write(values)
+        return dataset unless block_given?
+
+        begin
+          yield dataset
+        ensure
+          dataset.close
+        end
+      ensure
+        HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+      end
+
+      def open(parent_id, name)
+        dataset = from_id(HDF5::FFI.H5Dopen2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
+        return dataset unless block_given?
+
+        begin
+          yield dataset
+        ensure
+          dataset.close
+        end
+      end
 
       private
 
@@ -103,9 +107,9 @@ module HDF5
     end
 
     def write(data)
-      values = self.class.send(:normalize_data, data)
-      mem_type_id = self.class.send(:datatype_id_for, values)
-      buffer = self.class.send(:buffer_for, values)
+      values = DataHelpers.normalize_data(data)
+      mem_type_id = DataHelpers.datatype_id_for(values)
+      buffer = DataHelpers.buffer_for(values)
       status = HDF5::FFI.H5Dwrite(@dataset_id, mem_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write dataset' if status < 0

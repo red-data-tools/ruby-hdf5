@@ -21,6 +21,9 @@ Unsupported at this stage:
 Integer datasets and integer attributes currently use native C `int` under the hood.
 Values outside that range are rejected with `HDF5::Error` to avoid silent overflow.
 
+`Group#list_datasets` filters datasets from group entries by checking object type per entry.
+For very large groups, this may be slower than `Group#list_entries`.
+
 ## Supported HDF5 Versions
 
 - HDF5 1.10

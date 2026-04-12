@@ -79,7 +79,7 @@ module HDF5
       elsif dataset?(name)
         Dataset.open(@file_id, name)
       else
-        raise HDF5::Error, 'Unknown object type'
+        raise HDF5::Error, "Group or dataset not found: #{name}"
       end
     end
 

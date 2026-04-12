@@ -81,7 +81,7 @@ module HDF5
       elsif dataset?(name)
         Dataset.open(@group_id, name)
       else
-        raise HDF5::Error, 'Group or Dataset not found'
+        raise HDF5::Error, "Group or dataset not found: #{name}"
       end
     end
 
