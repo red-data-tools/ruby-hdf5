@@ -71,6 +71,14 @@ module HDF5
       values = normalize_data(value)
       datatype_id = datatype_id_for(values)
 
+      exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
+      raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
+
+      if exists.positive?
+        status = HDF5::FFI.H5Adelete(@dataset_id, attr_name)
+        raise HDF5::Error, "Failed to replace attribute: #{attr_name}" if status < 0
+      end
+
       dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
       dims.write_array_of_ulong_long([values.length])
       dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)

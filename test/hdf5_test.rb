@@ -105,6 +105,22 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'dataset attrs overwrite existing value' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'attribute-overwrite.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('values', [1, 2, 3])
+        dataset.attrs['scale'] = 42
+        dataset.attrs['scale'] = 100
+      end
+
+      HDF5::File.open(path) do |file|
+        assert_equal([100], file['values'].attrs['scale'])
+      end
+    end
+  end
+
   test 'group list_datasets returns only datasets' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'group-list.h5')
