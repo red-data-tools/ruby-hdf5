@@ -6,5 +6,6 @@
 /pkg/
 /spec/reports/
 /tmp/
+examples/*.h5
 
 *.lock
