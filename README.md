@@ -6,10 +6,11 @@ experimental Ruby bindings for the HDF5 library
 
 ## Supported HDF5 Versions
 
+- HDF5 1.10
 - HDF5 1.14
 - HDF5 2.x
 
-HDF5 1.10 and older are not supported.
+HDF5 versions older than 1.10 are not supported.
 
 ## Basic I/O
 

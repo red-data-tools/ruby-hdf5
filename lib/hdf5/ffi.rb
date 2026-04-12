@@ -44,6 +44,8 @@ module HDF5
     release = release_ptr.read_uint
 
     @backend = case [major, minor]
+               in [1, 10..13]
+                 'ffi_10'
                in [1, 14..]
                  'ffi_14'
                in [2.., _]

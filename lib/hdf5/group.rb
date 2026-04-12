@@ -61,7 +61,11 @@ module HDF5
         0 # continue
       end
 
-      HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil).negative? &&
+      (if HDF5::FFI::MiV == 10
+         HDF5::FFI.H5Literate(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+       else
+         HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+       end).negative? &&
         raise('Failed to list datasets')
 
       datasets
@@ -91,14 +95,28 @@ module HDF5
     end
 
     def group?(name)
-      info = HDF5::FFI::H5OInfo1T.new
-      HDF5::FFI.H5Oget_info_by_name1(@group_id, name, info, 0)
+      info = if HDF5::FFI::MiV == 10
+               HDF5::FFI::H5OInfoT.new.tap do |i|
+                 HDF5::FFI.H5Oget_info_by_name(@group_id, name, i, 0)
+               end
+             else
+               HDF5::FFI::H5OInfo1T.new.tap do |i|
+                 HDF5::FFI.H5Oget_info_by_name1(@group_id, name, i, 0)
+               end
+             end
       info[:type] == :H5O_TYPE_GROUP
     end
 
     def dataset?(name)
-      info = HDF5::FFI::H5OInfo1T.new
-      HDF5::FFI.H5Oget_info_by_name1(@group_id, name, info, 0)
+      info = if HDF5::FFI::MiV == 10
+               HDF5::FFI::H5OInfoT.new.tap do |i|
+                 HDF5::FFI.H5Oget_info_by_name(@group_id, name, i, 0)
+               end
+             else
+               HDF5::FFI::H5OInfo1T.new.tap do |i|
+                 HDF5::FFI.H5Oget_info_by_name1(@group_id, name, i, 0)
+               end
+             end
       info[:type] == :H5O_TYPE_DATASET
     end
   end
