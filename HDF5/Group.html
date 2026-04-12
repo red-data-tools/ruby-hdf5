@@ -325,6 +325,28 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#list_entries-instance_method" title="#list_entries (instance method)">#<strong>list_entries</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
     </ul>
   
 
@@ -494,18 +516,18 @@
       <pre class="lines">
 
 
-74
-75
-76
-77
 78
 79
 80
 81
-82</pre>
+82
+83
+84
+85
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 74</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_group?'>group?</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -536,12 +558,12 @@
       <pre class="lines">
 
 
-84
-85
-86</pre>
+88
+89
+90</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 84</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 88</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_attrs'>attrs</span>
   <span class='ivar'>@attrs</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="AttributeManager.html" title="HDF5::AttributeManager (class)">AttributeManager</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="AttributeManager.html#initialize-instance_method" title="HDF5::AttributeManager#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='ivar'>@group_id</span><span class='rparen'>)</span>
@@ -662,6 +684,36 @@
       <pre class="lines">
 
 
+74
+75
+76</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 74</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_list_datasets'>list_datasets</span>
+  <span class='id identifier rubyid_list_entries'>list_entries</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_name'>name</span><span class='op'>|</span> <span class='id identifier rubyid_dataset?'>dataset?</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="list_entries-instance_method">
+  
+    #<strong>list_entries</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
 57
 58
 59
@@ -682,10 +734,10 @@
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/group.rb', line 57</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_list_datasets'>list_datasets</span>
-  <span class='id identifier rubyid_datasets'>datasets</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_list_entries'>list_entries</span>
+  <span class='id identifier rubyid_entries'>entries</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_callback'>callback</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>FFI</span><span class='op'>::</span><span class='const'>Function</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:int</span><span class='comma'>,</span> <span class='qsymbols_beg'>%i[</span><span class='tstring_content'>int64_t</span><span class='words_sep'> </span><span class='tstring_content'>string</span><span class='words_sep'> </span><span class='tstring_content'>pointer</span><span class='words_sep'> </span><span class='tstring_content'>pointer</span><span class='tstring_end'>]</span></span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid__'>_</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span><span class='comma'>,</span> <span class='id identifier rubyid__'>_</span><span class='op'>|</span>
-    <span class='id identifier rubyid_datasets'>datasets</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_name'>name</span>
+    <span class='id identifier rubyid_entries'>entries</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_name'>name</span>
     <span class='int'>0</span> <span class='comment'># continue
 </span>  <span class='kw'>end</span>
 
@@ -694,9 +746,9 @@
    <span class='kw'>else</span>
      <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Literate2</span><span class='lparen'>(</span><span class='ivar'>@group_id</span><span class='comma'>,</span> <span class='symbol'>:H5_INDEX_NAME</span><span class='comma'>,</span> <span class='symbol'>:H5_ITER_NATIVE</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_callback'>callback</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
    <span class='kw'>end</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_negative?'>negative?</span> <span class='op'>&amp;&amp;</span>
-    <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to list datasets</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to list entries</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_datasets'>datasets</span>
+  <span class='id identifier rubyid_entries'>entries</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -708,7 +760,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Apr 12 03:54:24 2026 by
+  Generated on Sun Apr 12 04:00:20 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.39 (ruby-4.0.2).
 </div>
