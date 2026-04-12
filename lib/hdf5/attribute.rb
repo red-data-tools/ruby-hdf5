@@ -62,5 +62,70 @@ module HDF5
     ensure
       attr.close if attr
     end
+
+    def []=(attr_name, value)
+      write(attr_name, value)
+    end
+
+    def write(attr_name, value)
+      values = normalize_data(value)
+      datatype_id = datatype_id_for(values)
+
+      dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
+      dims.write_array_of_ulong_long([values.length])
+      dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
+      raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
+
+      attr_id = HDF5::FFI.H5Acreate2(
+        @dataset_id,
+        attr_name,
+        datatype_id,
+        dataspace_id,
+        HDF5::DEFAULT_PROPERTY_LIST,
+        HDF5::DEFAULT_PROPERTY_LIST
+      )
+      raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
+
+      buffer = buffer_for(values)
+      status = HDF5::FFI.H5Awrite(attr_id, datatype_id, buffer)
+      raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
+
+      value
+    ensure
+      HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
+      HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+    end
+
+    private
+
+    def normalize_data(value)
+      values = value.is_a?(Array) ? value : [value]
+      raise HDF5::Error, 'Attribute data must not be empty' if values.empty?
+      raise HDF5::Error, 'Nested arrays are not supported for attributes' if values.any? { |item| item.is_a?(Array) }
+
+      values
+    end
+
+    def datatype_id_for(values)
+      if values.all? { |item| item.is_a?(Integer) }
+        HDF5::FFI.H5T_NATIVE_INT
+      elsif values.all? { |item| item.is_a?(Numeric) }
+        HDF5::FFI.H5T_NATIVE_DOUBLE
+      else
+        raise HDF5::Error, 'Only numeric attribute data is supported'
+      end
+    end
+
+    def buffer_for(values)
+      if values.all? { |item| item.is_a?(Integer) }
+        buffer = ::FFI::MemoryPointer.new(:int, values.length)
+        buffer.write_array_of_int(values)
+      else
+        buffer = ::FFI::MemoryPointer.new(:double, values.length)
+        buffer.write_array_of_double(values.map(&:to_f))
+      end
+
+      buffer
+    end
   end
 end

@@ -11,12 +11,11 @@ This gem currently provides practical high-level wrappers for:
 - opening and creating files
 - creating groups
 - creating, writing, and reading one-dimensional numeric datasets
-- reading attributes
+- reading and writing numeric attributes
 
 Unsupported at this stage:
 
 - string dataset read/write
-- attribute write
 - multidimensional array write
 
 ## Supported HDF5 Versions

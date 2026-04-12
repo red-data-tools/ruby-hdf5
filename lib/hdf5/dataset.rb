@@ -66,6 +66,8 @@ module HDF5
         buffer
       end
 
+      private :normalize_data, :datatype_id_for, :buffer_for
+
       private
 
       def from_id(dataset_id, name)
@@ -84,9 +86,9 @@ module HDF5
     end
 
     def write(data)
-      values = self.class.normalize_data(data)
-      buffer = self.class.buffer_for(values)
-      mem_type_id = self.class.datatype_id_for(values)
+      values = self.class.send(:normalize_data, data)
+      buffer = self.class.send(:buffer_for, values)
+      mem_type_id = self.class.send(:datatype_id_for, values)
       status = HDF5::FFI.H5Dwrite(@dataset_id, mem_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write dataset' if status < 0
@@ -160,8 +162,8 @@ module HDF5
       buffer.read_array_of_double(total_elements)
     end
 
-    def read_string_data(total_elements)
-      raise NotImplementedError
+    def read_string_data(_total_elements)
+      raise HDF5::Error, 'String dataset reading is not supported yet'
     end
 
     private

@@ -54,10 +54,10 @@ module HDF5
       Dataset.create(@group_id, name, data, &block)
     end
 
-    def list_datasets
-      datasets = []
+    def list_entries
+      entries = []
       callback = ::FFI::Function.new(:int, %i[int64_t string pointer pointer]) do |_, name, _, _|
-        datasets << name
+        entries << name
         0 # continue
       end
 
@@ -66,9 +66,13 @@ module HDF5
        else
          HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
        end).negative? &&
-        raise(HDF5::Error, 'Failed to list datasets')
+        raise(HDF5::Error, 'Failed to list entries')
 
-      datasets
+      entries
+    end
+
+    def list_datasets
+      list_entries.select { |name| dataset?(name) }
     end
 
     def [](name)

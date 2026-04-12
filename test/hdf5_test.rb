@@ -96,31 +96,30 @@ class HDF5Test < Test::Unit::TestCase
 
       HDF5::File.create(path) do |file|
         dataset = file.create_dataset('values', [1, 2, 3])
-        dataset_id = dataset.instance_variable_get(:@dataset_id)
-
-        dims = FFI::MemoryPointer.new(:ulong_long, 1)
-        dims.write_array_of_ulong_long([1])
-        attr_space_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
-        attr_id = HDF5::FFI.H5Acreate2(
-          dataset_id,
-          'scale',
-          HDF5::FFI.H5T_NATIVE_INT,
-          attr_space_id,
-          HDF5::DEFAULT_PROPERTY_LIST,
-          HDF5::DEFAULT_PROPERTY_LIST
-        )
-        value = FFI::MemoryPointer.new(:int, 1)
-        value.write_int(42)
-        status = HDF5::FFI.H5Awrite(attr_id, HDF5::FFI.H5T_NATIVE_INT, value)
-        assert_equal(0, status)
-      ensure
-        HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
-        HDF5::FFI.H5Sclose(attr_space_id) if attr_space_id && attr_space_id >= 0
-        dataset.close if dataset
+        dataset.attrs['scale'] = 42
       end
 
       HDF5::File.open(path) do |file|
         assert_equal([42], file['values'].attrs['scale'])
+      end
+    end
+  end
+
+  test 'group list_datasets returns only datasets' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'group-list.h5')
+
+      HDF5::File.create(path) do |file|
+        file.create_group('parent') do |parent|
+          parent.create_group('child')
+          parent.create_dataset('numbers', [1, 2, 3])
+        end
+      end
+
+      HDF5::File.open(path) do |file|
+        parent = file['parent']
+        assert_equal(%w[child numbers].sort, parent.list_entries.sort)
+        assert_equal(%w[numbers], parent.list_datasets)
       end
     end
   end
