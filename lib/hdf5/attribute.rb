@@ -116,6 +116,7 @@ module HDF5
 
     def datatype_id_for(values)
       if values.all? { |item| item.is_a?(Integer) }
+        validate_native_int_range!(values)
         HDF5::FFI.H5T_NATIVE_INT
       elsif values.all? { |item| item.is_a?(Numeric) }
         HDF5::FFI.H5T_NATIVE_DOUBLE
@@ -134,6 +135,22 @@ module HDF5
       end
 
       buffer
+    end
+
+    def native_int_bounds
+      bits = ::FFI.type_size(:int) * 8
+      max = (1 << (bits - 1)) - 1
+      min = -(1 << (bits - 1))
+      [min, max]
+    end
+
+    def validate_native_int_range!(values)
+      min, max = native_int_bounds
+      out_of_range = values.find { |value| value < min || value > max }
+      return unless out_of_range
+
+      raise HDF5::Error,
+            "Integer value #{out_of_range} is outside native int range (#{min}..#{max}). Use a smaller value."
     end
   end
 end

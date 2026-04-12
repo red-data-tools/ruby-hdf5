@@ -154,6 +154,23 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'rejects integer values outside native int range on attribute write' do
+    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
+    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'attribute-overflow.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('values', [1, 2, 3])
+        error = assert_raise(HDF5::Error) do
+          dataset.attrs['scale'] = [max + 1]
+        end
+        assert_include(error.message, "#{min}..#{max}")
+      end
+    end
+  end
+
   test 'group list_datasets returns only datasets' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'group-list.h5')
