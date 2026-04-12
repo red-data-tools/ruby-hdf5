@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'test_helper'
+require 'tmpdir'
 
 class HDF5Test < Test::Unit::TestCase
   test 'VERSION' do
@@ -32,5 +33,44 @@ class HDF5Test < Test::Unit::TestCase
     assert_equal([10], d.shape)
     assert_equal(:H5T_INTEGER, d.dtype)
     assert_equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], d.read)
+  end
+
+  test 'create group and integer dataset' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'integer.h5')
+      file = HDF5::File.create(path)
+      group = file.create_group('numbers')
+      dataset = group.create_dataset('ints', [1, 2, 3, 4])
+      dataset.close
+      group.close
+      file.close
+
+      reopened = HDF5::File.open(path)
+      assert_equal(%w[numbers], reopened.list_entries)
+      loaded = reopened['numbers']['ints']
+      assert_equal([4], loaded.shape)
+      assert_equal(:H5T_INTEGER, loaded.dtype)
+      assert_equal([1, 2, 3, 4], loaded.read)
+      loaded.close
+      reopened.close
+    end
+  end
+
+  test 'create float dataset' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'float.h5')
+      file = HDF5::File.create(path)
+      dataset = file.create_dataset('values', [1.5, 2.5, 3.5])
+      dataset.close
+      file.close
+
+      reopened = HDF5::File.open(path)
+      loaded = reopened['values']
+      assert_equal([3], loaded.shape)
+      assert_equal(:H5T_FLOAT, loaded.dtype)
+      assert_equal([1.5, 2.5, 3.5], loaded.read)
+      loaded.close
+      reopened.close
+    end
   end
 end

@@ -2,6 +2,10 @@ module HDF5
   module FFI
     extend ::FFI::Library
 
+    class << self
+      attr_reader :backend
+    end
+
     begin
       ffi_lib HDF5.lib_path
     rescue LoadError => e
@@ -39,13 +43,15 @@ module HDF5
     minor = minor_ptr.read_uint
     release = release_ptr.read_uint
 
-    case [major, minor]
-    in [1, 10]
-      require_relative 'ffi_10'
-    in [1, 14..] | [2.., _]
-      require_relative 'ffi_14'
-    else
-      raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
-    end
+    @backend = case [major, minor]
+               in [1, 14..]
+                 'ffi_14'
+               in [2.., _]
+                 'ffi_14'
+               else
+                 raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
+               end
+
+    require_relative @backend
   end
 end

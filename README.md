@@ -4,6 +4,64 @@
 
 experimental Ruby bindings for the HDF5 library
 
+## Supported HDF5 Versions
+
+- HDF5 1.14
+- HDF5 2.x
+
+HDF5 1.10 and older are not supported.
+
+## Basic I/O
+
+Current high-level API supports these operations:
+
+- open an existing HDF5 file
+- create a new HDF5 file
+- create groups
+- create, write, and read one-dimensional numeric datasets
+
+Not supported yet:
+
+- string datasets
+- attribute writes
+- multidimensional array writes
+
+### Read an existing file
+
+```ruby
+require 'hdf5'
+
+file = HDF5::File.open('example.h5')
+group = file['foo']
+dataset = group['bar_int']
+
+p dataset.shape
+p dataset.dtype
+p dataset.read
+
+dataset.close
+group.close
+file.close
+```
+
+### Create and write a file
+
+```ruby
+require 'hdf5'
+
+file = HDF5::File.create('numbers.h5')
+group = file.create_group('values')
+dataset = group.create_dataset('ints', [1, 2, 3, 4])
+
+dataset.close
+group.close
+file.close
+
+reopened = HDF5::File.open('numbers.h5')
+p reopened['values']['ints'].read
+reopened.close
+```
+
 ## Development
 
 - [c2ffi](https://github.com/rpav/c2ffi)
