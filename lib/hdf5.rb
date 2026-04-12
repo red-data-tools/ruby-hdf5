@@ -5,6 +5,7 @@ require_relative 'hdf5/version'
 
 module HDF5
   class Error < StandardError; end
+  DEFAULT_PROPERTY_LIST = 0
 
   class << self
     attr_accessor :lib_path

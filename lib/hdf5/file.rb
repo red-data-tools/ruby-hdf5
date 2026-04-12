@@ -3,16 +3,29 @@ module HDF5
     H5F_ACC_RDONLY = 0x0000
     H5F_ACC_RDWR = 0x0001
     H5F_ACC_TRUNC = 0x0002
-    H5P_DEFAULT = 0
 
     class << self
       def create(filename, flags = H5F_ACC_TRUNC)
-        file_id = HDF5::FFI.H5Fcreate(filename, flags, H5P_DEFAULT, H5P_DEFAULT)
-        from_id(file_id, filename, flags)
+        file = from_id(HDF5::FFI.H5Fcreate(filename, flags, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST),
+                       filename, flags)
+        return file unless block_given?
+
+        begin
+          yield file
+        ensure
+          file.close
+        end
       end
 
       def open(filename, mode = H5F_ACC_RDONLY)
-        from_id(HDF5::FFI.H5Fopen(filename, mode, H5P_DEFAULT), filename, mode)
+        file = from_id(HDF5::FFI.H5Fopen(filename, mode, HDF5::DEFAULT_PROPERTY_LIST), filename, mode)
+        return file unless block_given?
+
+        begin
+          yield file
+        ensure
+          file.close
+        end
       end
 
       private
@@ -25,19 +38,22 @@ module HDF5
     end
 
     def initialize(filename, mode = H5F_ACC_RDONLY)
-      initialize_from_id(HDF5::FFI.H5Fopen(filename, mode, H5P_DEFAULT), filename, mode)
+      initialize_from_id(HDF5::FFI.H5Fopen(filename, mode, HDF5::DEFAULT_PROPERTY_LIST), filename, mode)
     end
 
     def close
+      return if @file_id.nil?
+
       HDF5::FFI.H5Fclose(@file_id)
+      @file_id = nil
     end
 
-    def create_group(name)
-      Group.create(@file_id, name)
+    def create_group(name, &block)
+      Group.create(@file_id, name, &block)
     end
 
-    def create_dataset(name, data)
-      Dataset.create(@file_id, name, data)
+    def create_dataset(name, data, &block)
+      Dataset.create(@file_id, name, data, &block)
     end
 
     def list_entries
@@ -47,10 +63,8 @@ module HDF5
         0 # continue
       end
 
-      case FFI::MiV
-      when 10 then HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-      when 14 then HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-      end.negative? && raise('Failed to iterate over file entries')
+      HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback,
+                            nil).negative? && raise(HDF5::Error, 'Failed to iterate over file entries')
 
       list
     end
@@ -61,7 +75,7 @@ module HDF5
       elsif dataset?(name)
         Dataset.open(@file_id, name)
       else
-        raise 'Unknown object type'
+        raise HDF5::Error, 'Unknown object type'
       end
     end
 
@@ -72,7 +86,7 @@ module HDF5
     private
 
     def initialize_from_id(file_id, filename, mode)
-      raise "Failed to open file: #{filename}" if file_id < 0
+      raise HDF5::Error, "Failed to open file: #{filename}" if file_id < 0
 
       @filename = filename
       @mode = mode

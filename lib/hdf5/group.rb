@@ -1,15 +1,29 @@
 module HDF5
   class Group
-    H5P_DEFAULT = 0
-
     class << self
       def create(parent_id, name)
-        group_id = HDF5::FFI.H5Gcreate2(parent_id, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)
-        from_id(group_id, name)
+        group = from_id(
+          HDF5::FFI.H5Gcreate2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
+                               HDF5::DEFAULT_PROPERTY_LIST), name
+        )
+        return group unless block_given?
+
+        begin
+          yield group
+        ensure
+          group.close
+        end
       end
 
       def open(parent_id, name)
-        from_id(HDF5::FFI.H5Gopen2(parent_id, name, H5P_DEFAULT), name)
+        group = from_id(HDF5::FFI.H5Gopen2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
+        return group unless block_given?
+
+        begin
+          yield group
+        ensure
+          group.close
+        end
       end
 
       private
@@ -22,19 +36,22 @@ module HDF5
     end
 
     def initialize(file_id, name)
-      initialize_from_id(HDF5::FFI.H5Gopen2(file_id, name, H5P_DEFAULT), name)
+      initialize_from_id(HDF5::FFI.H5Gopen2(file_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
     end
 
     def close
+      return if @group_id.nil?
+
       HDF5::FFI.H5Gclose(@group_id)
+      @group_id = nil
     end
 
-    def create_group(name)
-      self.class.create(@group_id, name)
+    def create_group(name, &block)
+      self.class.create(@group_id, name, &block)
     end
 
-    def create_dataset(name, data)
-      Dataset.create(@group_id, name, data)
+    def create_dataset(name, data, &block)
+      Dataset.create(@group_id, name, data, &block)
     end
 
     def list_datasets
@@ -56,7 +73,7 @@ module HDF5
       elsif dataset?(name)
         Dataset.open(@group_id, name)
       else
-        raise 'Group or Dataset not found'
+        raise HDF5::Error, 'Group or Dataset not found'
       end
     end
 
@@ -67,7 +84,7 @@ module HDF5
     private
 
     def initialize_from_id(group_id, name)
-      raise "Failed to open group: #{name}" if group_id < 0
+      raise HDF5::Error, "Failed to open group: #{name}" if group_id < 0
 
       @group_id = group_id
       @name = name

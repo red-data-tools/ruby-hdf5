@@ -73,4 +73,26 @@ class HDF5Test < Test::Unit::TestCase
       reopened.close
     end
   end
+
+  test 'block API closes resources automatically' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'block.h5')
+
+      HDF5::File.create(path) do |file|
+        file.create_group('values') do |group|
+          group.create_dataset('ints', [10, 20, 30])
+        end
+      end
+
+      HDF5::File.open(path) do |file|
+        assert_equal([10, 20, 30], file['values']['ints'].read)
+      end
+    end
+  end
+
+  test 'raises HDF5 error for missing file' do
+    assert_raise(HDF5::Error) do
+      HDF5::File.open('/tmp/does-not-exist-ruby-hdf5.h5')
+    end
+  end
 end
