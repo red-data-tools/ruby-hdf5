@@ -2,7 +2,22 @@
 
 [![test](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml/badge.svg)](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml)
 
-experimental Ruby bindings for the HDF5 library
+Ruby bindings for the HDF5 library.
+
+## Scope
+
+This gem currently provides practical high-level wrappers for:
+
+- opening and creating files
+- creating groups
+- creating, writing, and reading one-dimensional numeric datasets
+- reading attributes
+
+Unsupported at this stage:
+
+- string dataset read/write
+- attribute write
+- multidimensional array write
 
 ## Supported HDF5 Versions
 
@@ -12,37 +27,51 @@ experimental Ruby bindings for the HDF5 library
 
 HDF5 versions older than 1.10 are not supported.
 
-## Basic I/O
+## Install
 
-Current high-level API supports these operations:
+Add to your Gemfile:
 
-- open an existing HDF5 file
-- create a new HDF5 file
-- create groups
-- create, write, and read one-dimensional numeric datasets
+```ruby
+gem 'ruby-hdf5'
+```
 
-Not supported yet:
+Install:
 
-- string datasets
-- attribute writes
-- multidimensional array writes
+```sh
+bundle install
+```
+
+System library (`libhdf5`) is required.
+
+## Runtime Notes
+
+- The gem loads `libhdf5` through FFI.
+- If the shared library cannot be found automatically, set `HDF5_LIB_PATH`.
+
+Examples:
+
+```sh
+# Point to a directory containing libhdf5.so
+export HDF5_LIB_PATH=/usr/lib
+
+# Or point directly to the shared object
+export HDF5_LIB_PATH=/usr/lib/libhdf5.so
+```
+
+## Quick Start
 
 ### Read an existing file
 
 ```ruby
 require 'hdf5'
 
-file = HDF5::File.open('example.h5')
-group = file['foo']
-dataset = group['bar_int']
-
-p dataset.shape
-p dataset.dtype
-p dataset.read
-
-dataset.close
-group.close
-file.close
+HDF5::File.open('example.h5') do |file|
+	group = file['foo']
+	dataset = group['bar_int']
+	p dataset.shape
+	p dataset.dtype
+	p dataset.read
+end
 ```
 
 ### Create and write a file
@@ -50,17 +79,27 @@ file.close
 ```ruby
 require 'hdf5'
 
-file = HDF5::File.create('numbers.h5')
-group = file.create_group('values')
-dataset = group.create_dataset('ints', [1, 2, 3, 4])
-
-dataset.close
-group.close
-file.close
+HDF5::File.create('numbers.h5') do |file|
+	file.create_group('values') do |group|
+		group.create_dataset('ints', [1, 2, 3, 4])
+	end
+end
 
 reopened = HDF5::File.open('numbers.h5')
 p reopened['values']['ints'].read
 reopened.close
+```
+
+## Error Handling
+
+High-level API failures raise `HDF5::Error`.
+
+```ruby
+begin
+	HDF5::File.open('missing.h5')
+rescue HDF5::Error => e
+	warn e.message
+end
 ```
 
 ## Development
@@ -82,23 +121,6 @@ c2ffi4rb hdf5.json > lib/hdf5/ffi.rb
 ```
 
 The auto-generated bindings require some minor manual modifications.
-
-### Development Strategy
-
-#### All pull requests will be merged
-
-- All pull requests received will be merged unless there is detrimental code.
-- If the pull request contains a bug, it still will be merged.
-- The author can add a comment that there is a bug here, or revert the commit if the bug is critical.
-- The author can add a commit to the pull request or send another pull request to fix the bug later.
-
-#### Why are all pull requests merged?
-
-- Development is a transition of code states.
-- We pay more attention to transient events, the probability that new commitments will continue to occur, than to the quality of the code at a given point in time.
-- Usually, High code quality is important to keep developers and users motivated.
-- However, HDF5 binding for Ruby has not been maintained for a long time.
-- This situation means that developer density is low and requires unusual strategies to maintain the project.
 
 ## Acknowledgement
 
