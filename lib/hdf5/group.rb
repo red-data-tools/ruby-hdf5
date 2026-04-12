@@ -66,7 +66,7 @@ module HDF5
        else
          HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
        end).negative? &&
-        raise('Failed to list datasets')
+        raise(HDF5::Error, 'Failed to list datasets')
 
       datasets
     end
