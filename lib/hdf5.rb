@@ -11,20 +11,23 @@ module HDF5
 
     def search_hdf5lib
       name = "libhdf5.#{FFI::Platform::LIBSUFFIX}"
-      return File.expand_path(name, ENV['HDF5_LIB_PATH']) if ENV['HDF5_LIB_PATH']
+      env_path = ENV['HDF5_LIB_PATH']
+      return env_path if env_path && File.file?(env_path)
+      return File.expand_path(name, env_path) if env_path && File.directory?(env_path)
 
       begin
         require 'pkg-config'
         libs = PKGConfig.libs('hdf5')
         pattern = %r{(?<=-L)/[^ ]+}
-        lib_dir = libs.scan(pattern).first
-        lib_path = File.expand_path(name, lib_dir)
+        libs.scan(pattern).each do |lib_dir|
+          lib_path = File.expand_path(name, lib_dir)
+          return lib_path if File.exist?(lib_path)
+        end
       rescue PackageConfig::NotFoundError
         warn 'hdf5.pc not found.'
       end
-      return lib_path if File.exist?(lib_path)
 
-      warn "hdf5 shared library '#{name}' not found."
+      name
     end
   end
 

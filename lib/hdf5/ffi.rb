@@ -30,18 +30,22 @@ module HDF5
       pointer
     ], :int
 
-    major_ptr = ::FFI::MemoryPointer.new(:int)
-    minor_ptr = ::FFI::MemoryPointer.new(:int)
-    release_ptr = ::FFI::MemoryPointer.new(:int)
+    major_ptr = ::FFI::MemoryPointer.new(:uint)
+    minor_ptr = ::FFI::MemoryPointer.new(:uint)
+    release_ptr = ::FFI::MemoryPointer.new(:uint)
     HDF5::FFI.H5get_libversion(major_ptr, minor_ptr, release_ptr)
 
-    raise 'HDF5 major version mismatch' if major_ptr.read_int != 1
+    major = major_ptr.read_uint
+    minor = minor_ptr.read_uint
+    release = release_ptr.read_uint
 
-    case minor_ptr.read_int
-    when 10
+    case [major, minor]
+    in [1, 10]
       require_relative 'ffi_10'
-    when 14..Float::INFINITY
+    in [1, 14..] | [2.., _]
       require_relative 'ffi_14'
+    else
+      raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
     end
   end
 end
