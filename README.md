@@ -104,23 +104,7 @@ end
 
 ## Development
 
-- [c2ffi](https://github.com/rpav/c2ffi)
-- [c2ffi4rb](https://github.com/kojix2/c2ffi4rb)
-
-### Generate spec file
-
-```sh
-c2ffi $(pkg-config --cflags-only-I hdf5 | ruby -npe '$_.strip!.gsub!(/-I/, "")<<"/hdf5.h"') > hdf5.json
-# c2ffi /usr/include/hdf5/serial/hdf5.h > hdf5.json
-```
-
-### Generate Ruby bindings
-
-```sh
-c2ffi4rb hdf5.json > lib/hdf5/ffi.rb
-```
-
-The auto-generated bindings require some minor manual modifications.
+After more than a decade, it is clear that the Ruby community does not have enough resources to sustainably maintain an HDF5 library. For that reason, development of this library is intentionally AI-assisted. Something is better than nothing.
 
 ## Acknowledgement
 
