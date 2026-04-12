@@ -84,6 +84,8 @@
 <p>multidimensional array write</p>
 </li></ul>
 
+<p>Integer datasets and integer attributes currently use native C <code>int</code> under the hood. Values outside that range are rejected with <code>HDF5::Error</code> to avoid silent overflow.</p>
+
 <h2 id="label-Supported+HDF5+Versions">Supported HDF5 Versions</h2>
 <ul><li>
 <p>HDF5 1.10</p>
@@ -180,7 +182,7 @@ export HDF5_LIB_PATH=/usr/lib/libhdf5.so
 </div></div>
 
       <div id="footer">
-  Generated on Sun Apr 12 04:03:33 2026 by
+  Generated on Sun Apr 12 04:07:41 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.39 (ruby-4.0.2).
 </div>
