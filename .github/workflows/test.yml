@@ -26,3 +26,5 @@ jobs:
         run: brew install hdf5
       - name: Run test
         run: bundle exec rake test
+      - name: Run examples
+        run: bundle exec rake test:examples
