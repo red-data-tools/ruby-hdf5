@@ -74,6 +74,39 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'rejects integer values outside native int range on create' do
+    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
+    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'overflow-create.h5')
+
+      HDF5::File.create(path) do |file|
+        error = assert_raise(HDF5::Error) do
+          file.create_dataset('too_large', [max + 1])
+        end
+        assert_include(error.message, "#{min}..#{max}")
+      end
+    end
+  end
+
+  test 'rejects integer values outside native int range on write' do
+    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
+    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
+
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'overflow-write.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('ints', [1, 2, 3])
+        error = assert_raise(HDF5::Error) do
+          dataset.write([min - 1])
+        end
+        assert_include(error.message, "#{min}..#{max}")
+      end
+    end
+  end
+
   test 'block API closes resources automatically' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'block.h5')

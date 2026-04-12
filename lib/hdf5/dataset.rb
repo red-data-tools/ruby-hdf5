@@ -46,6 +46,7 @@ module HDF5
 
       def datatype_id_for(data)
         if data.all? { |value| value.is_a?(Integer) }
+          validate_native_int_range!(data)
           HDF5::FFI.H5T_NATIVE_INT
         elsif data.all? { |value| value.is_a?(Numeric) }
           HDF5::FFI.H5T_NATIVE_DOUBLE
@@ -66,7 +67,23 @@ module HDF5
         buffer
       end
 
-      private :normalize_data, :datatype_id_for, :buffer_for
+      def native_int_bounds
+        bits = ::FFI.type_size(:int) * 8
+        max = (1 << (bits - 1)) - 1
+        min = -(1 << (bits - 1))
+        [min, max]
+      end
+
+      def validate_native_int_range!(values)
+        min, max = native_int_bounds
+        out_of_range = values.find { |value| value < min || value > max }
+        return unless out_of_range
+
+        raise HDF5::Error,
+              "Integer value #{out_of_range} is outside native int range (#{min}..#{max}). Use a smaller value."
+      end
+
+      private :normalize_data, :datatype_id_for, :buffer_for, :native_int_bounds, :validate_native_int_range!
 
       private
 
@@ -87,8 +104,8 @@ module HDF5
 
     def write(data)
       values = self.class.send(:normalize_data, data)
-      buffer = self.class.send(:buffer_for, values)
       mem_type_id = self.class.send(:datatype_id_for, values)
+      buffer = self.class.send(:buffer_for, values)
       status = HDF5::FFI.H5Dwrite(@dataset_id, mem_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write dataset' if status < 0

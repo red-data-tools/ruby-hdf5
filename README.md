@@ -18,6 +18,9 @@ Unsupported at this stage:
 - string dataset read/write
 - multidimensional array write
 
+Integer datasets and integer attributes currently use native C `int` under the hood.
+Values outside that range are rejected with `HDF5::Error` to avoid silent overflow.
+
 ## Supported HDF5 Versions
 
 - HDF5 1.10
