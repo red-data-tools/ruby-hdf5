@@ -62,6 +62,7 @@
       <div id="content"><div id='filecontents'><h1 id="ruby_hdf5">ruby-hdf5</h1>
 <p><a href="https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml"><img src="https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml/badge.svg" alt="test" /></a></p>
 <p>Ruby bindings for the HDF5 library.</p>
+<p>Ruby 3.4 or newer is required.</p>
 <h2 id="Scope">Scope</h2>
 <p>This gem currently provides practical high-level wrappers for:</p>
 <ul>
@@ -84,10 +85,9 @@
 <p><code>Group#list_datasets</code> filters datasets from group entries by checking object type per entry.
 For very large groups, this may be slower than <code>Group#list_entries</code>.</p>
 <h2 id="HDF5_Versions">HDF5 Versions</h2>
-<p>The current implementation is tested with HDF5 1.10.10 on Linux. HDF5 1.14,
-macOS, and Windows are planned compatibility targets but are not verified by
-the current test environment. Unknown major versions are not treated as
-compatible automatically.</p>
+<p>The test matrix covers the system HDF5 library on Ubuntu and the current
+Homebrew HDF5 release on macOS. HDF5 1.10, 1.14, and 2.x use compatibility
+APIs verified at load time.</p>
 <p>HDF5 versions older than 1.10 are not supported.</p>
 <h2 id="Install">Install</h2>
 <p>Add to your Gemfile:</p>
@@ -155,7 +155,7 @@ export HDF5_LIB_PATH=/usr/lib/libhdf5.so
 <p>The gem is available as open source under the terms of the <a href="https://opensource.org/licenses/MIT">MIT License</a>.</p></div></div>
 
       <div id="footer">
-  Generated on Thu Sep 17 04:03:21 2026 by
+  Generated on Thu Sep 17 04:24:33 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
