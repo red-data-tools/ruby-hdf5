@@ -141,6 +141,28 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'yields independent blocks within the requested byte budget' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'each-block.h5')
+      matrix = Numo::Int16[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+
+      HDF5::File.create(path) { |file| file.create_dataset('matrix', matrix) }
+
+      HDF5::File.open(path) do |file|
+        blocks = []
+        file['matrix'].each_block(max_bytes: 4) do |selection, block|
+          assert_operator(block.to_binary.bytesize, :<=, 4)
+          blocks << [selection, block]
+        end
+
+        assert_equal(6, blocks.length)
+        assert_equal([0...1, 0...2], blocks.first.first)
+        assert_equal(Numo::Int16[[1, 2]], blocks.first.last)
+        assert_equal(Numo::Int16[[11, 12]], blocks.last.last)
+      end
+    end
+  end
+
   test 'preserves int64 values on create' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'int64-create.h5')

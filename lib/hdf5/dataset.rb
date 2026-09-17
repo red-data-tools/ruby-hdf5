@@ -201,7 +201,48 @@ module HDF5
       destination.store(values)
     end
 
+    def each_block(max_bytes:)
+      return enum_for(__method__, max_bytes:) unless block_given?
+      raise ArgumentError, 'max_bytes must be a positive integer' unless max_bytes.is_a?(Integer) && max_bytes.positive?
+
+      current_dtype = dtype
+      raise ArgumentError, 'max_bytes is smaller than one dataset element' if max_bytes < current_dtype.itemsize
+
+      current_shape = shape
+      if current_shape.empty?
+        yield [], read
+        return
+      end
+      return if current_shape.any?(&:zero?)
+
+      block_shape = block_shape_for(current_shape, max_bytes / current_dtype.itemsize)
+      each_block_selection(current_shape, block_shape) do |selection|
+        yield selection, read(selection: selection)
+      end
+    end
+
     private
+
+    def block_shape_for(dataset_shape, max_elements)
+      remaining = max_elements
+      dataset_shape.reverse.map do |dimension|
+        block_dimension = [dimension, remaining].min
+        remaining /= block_dimension
+        block_dimension
+      end.reverse
+    end
+
+    def each_block_selection(dataset_shape, block_shape, axis = 0, prefix = [], &block)
+      if axis == dataset_shape.length
+        yield prefix
+        return
+      end
+
+      0.step(dataset_shape[axis] - 1, block_shape[axis]) do |start|
+        length = [block_shape[axis], dataset_shape[axis] - start].min
+        each_block_selection(dataset_shape, block_shape, axis + 1, prefix + [start...(start + length)], &block)
+      end
+    end
 
     def create_memory_dataspace(shape)
       return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
