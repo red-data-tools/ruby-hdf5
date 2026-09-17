@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module HDF5
   class Attribute
     def initialize(dataset_id, attr_name, context = nil)
@@ -64,6 +66,8 @@ module HDF5
 
       attribute_shape = shape(space_id)
       count = attribute_shape.empty? ? 1 : attribute_shape.inject(:*)
+      return Numo::RObject.new(*attribute_shape) if count.zero?
+
       buffer = ::FFI::MemoryPointer.new(:pointer, count)
       status = HDF5::FFI.H5Aread(@attr_id, type_id, buffer)
       raise HDF5::Error, 'Failed to read string attribute' if status < 0
@@ -130,10 +134,10 @@ module HDF5
       self
     end
 
-    def create(attr_name, value)
+    def create(attr_name, value, dtype: nil, casting: :safe)
       raise HDF5::Error, "Attribute already exists: #{attr_name}" if key?(attr_name)
 
-      write(attr_name, value)
+      write(attr_name, value, dtype:, casting:)
     end
 
     def modify(attr_name, value, casting: :safe)
@@ -184,57 +188,96 @@ module HDF5
       HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
     end
 
-    def write(attr_name, value)
+    def write(attr_name, value, dtype: nil, casting: :safe)
       @context&.ensure_open!(@dataset_id)
+      raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+
       empty_data = value.is_a?(HDF5::Empty)
-      if empty_data && value.dtype.kind == :string
-        raise UnsupportedFeatureError, 'Creating Null string attributes is not yet supported'
+      explicit_dtype = DType.for_symbol(dtype) if dtype
+      if empty_data && explicit_dtype && explicit_dtype.to_sym != value.dtype.to_sym
+        raise ConversionError, 'dtype must match the Null attribute dtype'
       end
-      string_data = HDF5::StringCodec.string_data?(value)
+      inferred_string = HDF5::StringCodec.string_data?(value)
+      if inferred_string && explicit_dtype && explicit_dtype.kind != :string
+        raise ConversionError, 'Cannot create a numeric attribute from string data'
+      end
+      string_type = inferred_string || explicit_dtype&.kind == :string || empty_data && value.dtype.kind == :string
+      string_data = string_type && !empty_data
       string_values, string_shape = HDF5::StringCodec.normalize_data(value) if string_data
-      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data') unless string_data || empty_data
-      dtype_object = empty_data ? value.dtype : DType.for_numo(values) unless string_data
-      type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
+      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data', dtype: explicit_dtype, casting:) unless string_type || empty_data
+      dtype_object = empty_data ? value.dtype : (explicit_dtype || DType.for_numo(values)) unless string_type
+      type_id = string_type ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
 
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
       raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
 
-      if exists.positive?
-        status = HDF5::FFI.H5Adelete(@dataset_id, attr_name)
-        raise HDF5::Error, "Failed to replace attribute: #{attr_name}" if status < 0
-      end
+      # Write a replacement completely before changing the existing attribute.
+      written_name = exists.positive? ? temporary_attribute_name : attr_name
 
       dataspace_id = create_dataspace(empty_data ? nil : (string_data ? string_shape : values.shape))
       raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
 
       attr_id = HDF5::FFI.H5Acreate2(
         @dataset_id,
-        attr_name,
+        written_name,
         type_id,
         dataspace_id,
         HDF5::DEFAULT_PROPERTY_LIST,
         HDF5::DEFAULT_PROPERTY_LIST
       )
       raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
-      return value if empty_data
+      created = true
 
-      buffer, _string_pointers = if string_data
-                                   HDF5::StringCodec.buffer_for_values(string_values)
-                                 else
-                                   [HDF5::DataHelpers.buffer_for(values), nil]
-                                 end
-      memory_type_id = string_data ? type_id : dtype_object.memory_type_id
-      status = HDF5::FFI.H5Awrite(attr_id, memory_type_id, buffer)
-      raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
+      unless empty_data || string_data && string_values.empty?
+        buffer, _string_pointers = if string_data
+                                     HDF5::StringCodec.buffer_for_values(string_values)
+                                   else
+                                     [HDF5::DataHelpers.buffer_for(values), nil]
+                                   end
+        memory_type_id = string_data ? type_id : dtype_object.memory_type_id
+        status = HDF5::FFI.H5Awrite(attr_id, memory_type_id, buffer)
+        raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
+      end
+
+      replace_attribute(attr_name, written_name) if exists.positive?
+      initialized = true
 
       value
     ensure
       HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
+      if created && !initialized && HDF5::FFI.H5Aexists(@dataset_id, written_name).positive?
+        HDF5::FFI.H5Adelete(@dataset_id, written_name)
+      end
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
-      HDF5::FFI.H5Tclose(type_id) if string_data && type_id && type_id >= 0
+      HDF5::FFI.H5Tclose(type_id) if string_type && type_id && type_id >= 0
     end
 
     private
+
+    def temporary_attribute_name
+      loop do
+        name = ".ruby-hdf5-#{SecureRandom.hex(16)}"
+        return name unless key?(name)
+      end
+    end
+
+    def replace_attribute(attr_name, written_name)
+      backup_name = temporary_attribute_name
+      if HDF5::FFI.H5Arename(@dataset_id, attr_name, backup_name).negative?
+        raise HDF5::Error, "Failed to back up attribute: #{attr_name}"
+      end
+
+      if HDF5::FFI.H5Arename(@dataset_id, written_name, attr_name).negative?
+        if HDF5::FFI.H5Arename(@dataset_id, backup_name, attr_name).negative?
+          raise HDF5::Error, "Failed to replace attribute: #{attr_name}; original retained as #{backup_name}"
+        end
+        raise HDF5::Error, "Failed to replace attribute: #{attr_name}"
+      end
+
+      if HDF5::FFI.H5Adelete(@dataset_id, backup_name).negative?
+        raise HDF5::Error, "Failed to remove attribute backup: #{backup_name}"
+      end
+    end
 
     def attribute_shape(space_id)
       rank = HDF5::FFI.H5Sget_simple_extent_ndims(space_id)

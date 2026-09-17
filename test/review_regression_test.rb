@@ -203,15 +203,14 @@ class ReviewRegressionTest < Test::Unit::TestCase
     end
   end
 
-  test 'unsupported string operations preserve existing data' do
+  test 'Null strings can be copied while string fillvalue remains unsupported' do
     with_file do |file|
       dataset = file.create_dataset('text', 'hello')
       empty_string = HDF5::Empty.new(dataset.dtype)
-      assert_raise(HDF5::UnsupportedFeatureError) { file.create_dataset('null_copy', empty_string) }
-      assert_false(file.key?('null_copy'))
+      assert_kind_of(HDF5::Empty, file.create_dataset('null_copy', empty_string).read)
       dataset.attrs['text'] = 'preserved'
-      assert_raise(HDF5::UnsupportedFeatureError) { dataset.attrs['text'] = empty_string }
-      assert_equal('preserved', dataset.attrs['text'])
+      dataset.attrs['text'] = empty_string
+      assert_kind_of(HDF5::Empty, dataset.attrs['text'])
       assert_raise(HDF5::UnsupportedFeatureError) { dataset.fillvalue }
       assert_equal('hello', dataset.read)
     end

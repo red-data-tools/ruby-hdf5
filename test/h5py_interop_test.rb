@@ -123,6 +123,90 @@ class H5pyInteropTest < Test::Unit::TestCase
     end
   end
 
+  test 'writes explicit UTF-8 strings empty arrays and Null values readable by h5py' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'ruby_strings.h5')
+      HDF5::File.create(path) do |file|
+        file.create_dataset('scalar', '日本語', dtype: :string)
+        file.create_dataset('labels', %w[alpha 日本語], dtype: :string)
+        file.create_dataset('empty', [], dtype: :string)
+        file.create_dataset('matrix', [[], []], dtype: :string)
+        file.create_dataset('objects', Numo::RObject.new(0, 3), dtype: :string)
+        file.create_dataset('allocated', shape: [0, 3], dtype: :string)
+        file.create_dataset('null', HDF5::Empty.new(:string))
+        file.attrs.create('empty', [], dtype: :string)
+        file.attrs.create('matrix', [[], []], dtype: :string)
+        file.attrs['labels'] = %w[alpha 日本語]
+        file.attrs['null'] = HDF5::Empty.new(:string)
+      end
+
+      run_python(<<~PYTHON, path)
+        import h5py
+        import sys
+
+        with h5py.File(sys.argv[1], "r") as file:
+            for name in file:
+                info = h5py.check_string_dtype(file[name].dtype)
+                assert info.encoding == "utf-8" and info.length is None
+            assert file["scalar"].asstr()[()] == "日本語"
+            assert file["labels"].asstr()[:].tolist() == ["alpha", "日本語"]
+            for name, shape in (("empty", (0,)), ("matrix", (2, 0)),
+                                ("objects", (0, 3)), ("allocated", (0, 3))):
+                assert file[name].shape == shape
+                assert file[name].asstr()[:].shape == shape
+            assert file["null"].shape is None
+            assert isinstance(file["null"][()], h5py.Empty)
+            assert h5py.check_string_dtype(file["null"][()].dtype).encoding == "utf-8"
+            for name, shape in (("empty", (0,)), ("matrix", (2, 0))):
+                assert file.attrs[name].shape == shape
+                info = h5py.check_string_dtype(file.attrs.get_id(name).dtype)
+                assert info.encoding == "utf-8" and info.length is None
+            assert file.attrs["labels"].tolist() == ["alpha", "日本語"]
+            assert isinstance(file.attrs["null"], h5py.Empty)
+            info = h5py.check_string_dtype(file.attrs["null"].dtype)
+            assert info.encoding == "utf-8" and info.length is None
+      PYTHON
+    end
+  end
+
+  test 'reads and updates empty and Null UTF-8 strings created by h5py' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'python_strings.h5')
+      run_python(<<~PYTHON, path)
+        import h5py
+        import numpy as np
+        import sys
+
+        dtype = h5py.string_dtype("utf-8")
+        with h5py.File(sys.argv[1], "w") as file:
+            file.create_dataset("labels", data=["alpha", "日本語"], dtype=dtype)
+            file.create_dataset("empty", shape=(0,), dtype=dtype)
+            file.create_dataset("matrix", shape=(2, 0), dtype=dtype)
+            file.create_dataset("null", data=h5py.Empty(dtype))
+            file.attrs.create("empty", np.empty((0,), dtype=dtype), dtype=dtype)
+            file.attrs.create("matrix", np.empty((2, 0), dtype=dtype), dtype=dtype)
+            file.attrs["null"] = h5py.Empty(dtype)
+      PYTHON
+
+      HDF5::File.open(path, 'r+') do |file|
+        assert_equal(%w[alpha 日本語], file['labels'].read.to_a)
+        { 'empty' => [0], 'matrix' => [2, 0] }.each do |name, shape|
+          assert_equal(shape, file[name].read.shape)
+          assert_equal(Encoding::UTF_8, file[name].dtype.encoding)
+          assert_equal(shape, file.attrs[name].shape)
+        end
+        assert_equal(:string, file['null'].read.dtype.to_sym)
+        assert_equal(:string, file.attrs['null'].dtype.to_sym)
+        file['empty'].write([])
+        file['matrix'].write([[], []])
+        file.attrs.modify('empty', [])
+        file.attrs.modify('matrix', [[], []])
+        file.create_dataset('null_copy', file['null'].read)
+        file.attrs['null_copy'] = file.attrs['null']
+      end
+    end
+  end
+
   private
 
   def run_python(script, path)

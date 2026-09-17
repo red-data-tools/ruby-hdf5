@@ -3,35 +3,45 @@ module HDF5
     class << self
       def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
                  compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil, context: nil, casting: :safe)
+        raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
 
         empty_data = data.is_a?(HDF5::Empty)
+        explicit_dtype = DType.for_symbol(dtype) if dtype
         if empty_data
           raise ShapeError, 'Null datasets cannot have a shape' unless shape.nil?
-          if data.dtype.kind == :string
-            raise UnsupportedFeatureError, 'Creating Null string datasets is not yet supported'
+          if explicit_dtype && explicit_dtype.to_sym != data.dtype.to_sym
+            raise ConversionError, 'dtype must match the Null dataset dtype'
           end
         end
-        string_data = HDF5::StringCodec.string_data?(data)
+        inferred_string = HDF5::StringCodec.string_data?(data)
+        if inferred_string && explicit_dtype && explicit_dtype.kind != :string
+          raise ConversionError, 'Cannot create a numeric dataset from string data'
+        end
+        string_type = inferred_string || explicit_dtype&.kind == :string || empty_data && data.dtype.kind == :string
+        string_data = string_type && !data.nil? && !empty_data
         _string_values, string_shape = HDF5::StringCodec.normalize_data(data) if string_data
         unless data.nil? || string_data || empty_data
           narray = HDF5::DataHelpers.normalize_data(data,
-                                                    label: 'Dataset data', dtype: dtype && DType.for_symbol(dtype), casting:,
+                                                    label: 'Dataset data', dtype: explicit_dtype, casting:,
                                                     convert: false)
         end
-        unless string_data
+        unless string_type
           dtype_object = if empty_data
                            data.dtype
                          else
-                           (dtype ? DType.for_symbol(dtype) : DType.for_numo(narray))
+                           (explicit_dtype || DType.for_numo(narray))
                          end
         end
-        type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
+        type_id = string_type ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
         shape = string_data ? string_shape : narray.shape if shape.nil? && !data.nil? && !empty_data
         raise HDF5::Error, 'Dataset shape must match data shape' if narray && shape != narray.shape
         raise HDF5::ShapeError, 'Dataset shape must match string data shape' if string_data && shape != string_shape
 
-        raise HDF5::Error, 'Null datasets cannot have maxshape or chunks' if empty_data && (maxshape || chunks)
+        if empty_data && (maxshape || chunks || compression || compression_opts || shuffle || fletcher32 || !fillvalue.nil?)
+          raise HDF5::Error, 'Null datasets cannot have storage options'
+        end
 
         validate_maxshape(maxshape, shape) if maxshape
         chunks = :auto if maxshape && chunks.nil?
@@ -62,7 +72,7 @@ module HDF5
         end
         raise
       ensure
-        HDF5::FFI.H5Tclose(type_id) if string_data && type_id && type_id >= 0
+        HDF5::FFI.H5Tclose(type_id) if string_type && type_id && type_id >= 0
         HDF5::FFI.H5Pclose(dcpl_id) if dcpl_id && dcpl_id >= 0
         HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
       end
@@ -230,7 +240,9 @@ module HDF5
 
     def write(data, selection: nil, casting: :safe)
       ensure_open!
-      return write_string(data, selection:) if HDF5::StringCodec.string_data?(data)
+      raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+
+      return write_string(data, selection:) if dtype.kind == :string || HDF5::StringCodec.string_data?(data)
 
       current_shape = shape
       raise HDF5::Error, 'Cannot write to a Null dataset' if current_shape.nil?

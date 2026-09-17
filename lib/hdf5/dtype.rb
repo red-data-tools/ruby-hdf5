@@ -28,6 +28,11 @@ module HDF5
     end
 
     def self.for_symbol(symbol)
+      if symbol == :string
+        return new(:string, Numo::RObject, nil, nil, :string, ::FFI.type_size(:pointer), byteorder: :none,
+                   hdf5_class: :H5T_STRING, encoding: Encoding::UTF_8)
+      end
+
       type = TYPES.fetch(symbol) { raise HDF5::Error, "Unsupported dtype: #{symbol.inspect}" }
       new(symbol, *type)
     end
@@ -124,6 +129,8 @@ module HDF5
     end
 
     def memory_type_id
+      raise UnsupportedTypeError, 'String datatype IDs must be owned by the string codec caller' if kind == :string
+
       return self.class.bool_type_id(native: true) if kind == :bool
       return self.class.complex_type_id(itemsize, native: true) if kind == :complex
 
@@ -131,6 +138,8 @@ module HDF5
     end
 
     def storage_type_id
+      raise UnsupportedTypeError, 'String datatype IDs must be owned by the string codec caller' if kind == :string
+
       return self.class.bool_type_id(native: false) if kind == :bool
       return self.class.complex_type_id(itemsize, native: false) if kind == :complex
 

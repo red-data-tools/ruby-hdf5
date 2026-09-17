@@ -33,6 +33,8 @@ module HDF5
     end
 
     def read_values(buffer, count, shape, encoding: Encoding::UTF_8)
+      return Numo::RObject.new(*shape) if count.zero?
+
       values = buffer.read_array_of_pointer(count).map do |pointer|
         next nil if pointer.null?
 
@@ -63,14 +65,16 @@ module HDF5
       return [[normalize(value, encoding:)], []] if value.is_a?(String)
       return [value.to_a.flatten.map { |item| normalize(item, encoding:) }, value.shape] if value.is_a?(Numo::RObject)
 
+      unless value.is_a?(Array)
+        raise ConversionError, 'String data must be a String, Array of strings, or Numo::RObject'
+      end
+
       shape = array_shape(value)
       [value.flatten.map { |item| normalize(item, encoding:) }, shape]
     end
 
     def array_shape(value)
       return [] unless value.is_a?(Array)
-      raise HDF5::Error, 'String data must not be empty' if value.empty?
-
       DataHelpers.array_shape(value)
     end
 

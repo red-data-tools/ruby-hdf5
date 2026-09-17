@@ -104,9 +104,11 @@ end
 - Dataset metadata: `shape`, `ndim`, `size`, `dtype`, `chunks`, `maxshape`, `fillvalue`
 - Storage: chunking, gzip, shuffle, Fletcher32, resize, and append
 - Iteration: `each_block(max_bytes:)` and `each_chunk`
-- Attributes: `attrs[]`, `attrs[]=`, `attrs.create`, `attrs.modify`, `attrs.delete`
+- Attributes: `attrs[]`, `attrs[]=`, `attrs.create`, `attrs.write`, `attrs.modify`, `attrs.delete`
 
 Datasets support Numo numeric arrays, scalar values, variable-length UTF-8 strings, h5py-compatible bool values, and h5py-compatible complex values.
+
+Use `dtype: :string` for empty string arrays and `HDF5::Empty.new(:string)` for Null strings.
 
 ## Limitations
 

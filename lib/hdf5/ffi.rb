@@ -67,7 +67,7 @@ module HDF5
       H5Fopen H5Fcreate H5Fclose H5Fflush
       H5Gopen2 H5Gcreate2 H5Gclose
       H5Dopen2 H5Dcreate2 H5Dclose H5Dread H5Dwrite H5Dget_type H5Dget_space H5Dset_extent H5Dget_create_plist
-      H5Aopen H5Acreate2 H5Aclose H5Aread H5Awrite H5Aexists H5Adelete H5Aiterate2 H5Aget_type H5Aget_space
+      H5Aopen H5Acreate2 H5Aclose H5Aread H5Awrite H5Aexists H5Adelete H5Arename H5Aiterate2 H5Aget_type H5Aget_space
       H5Screate H5Screate_simple H5Sclose H5Sget_simple_extent_type H5Sget_simple_extent_ndims
       H5Sget_simple_extent_dims H5Sselect_hyperslab H5Sget_select_npoints
       H5Tcopy H5Tclose H5Tget_class H5Tget_size H5Tget_sign H5Tget_order H5Tget_precision H5Tget_offset

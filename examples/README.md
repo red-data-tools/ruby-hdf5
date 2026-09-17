@@ -19,7 +19,7 @@ Each script creates its own file under `examples/output/`.
 3. `03_numo_arrays.rb`: store multidimensional Numo arrays
 4. `04_dataset_metadata.rb`: inspect dataset metadata
 5. `05_attributes.rb`: attach metadata to files, groups, and datasets
-6. `06_utf8_strings.rb`: store UTF-8 strings
+6. `06_utf8_strings.rb`: store UTF-8 strings, explicit empty arrays, and Null strings
 7. `07_scalar_empty_null.rb`: distinguish scalar, empty, and Null dataspaces
 8. `08_reading_slices.rb`: read dataset selections
 9. `09_writing_slices.rb`: update dataset selections
