@@ -4,6 +4,8 @@
 
 Ruby bindings for the HDF5 library.
 
+Ruby 3.4 or newer is required.
+
 ## Scope
 
 This gem currently provides practical high-level wrappers for:
@@ -29,10 +31,9 @@ For very large groups, this may be slower than `Group#list_entries`.
 
 ## HDF5 Versions
 
-The current implementation is tested with HDF5 1.10.10 on Linux. HDF5 1.14,
-macOS, and Windows are planned compatibility targets but are not verified by
-the current test environment. Unknown major versions are not treated as
-compatible automatically.
+The test matrix covers the system HDF5 library on Ubuntu and the current
+Homebrew HDF5 release on macOS. HDF5 1.10, 1.14, and 2.x use compatibility
+APIs verified at load time.
 
 HDF5 versions older than 1.10 are not supported.
 

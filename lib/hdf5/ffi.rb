@@ -50,6 +50,8 @@ module HDF5
                  'ffi_10'
                in [1, 14..]
                  'ffi_14'
+               in [2.., _]
+                 'ffi_14'
                else
                  raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
                end

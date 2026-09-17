@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = 'hdf5'
   spec.description = 'hdf5'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.2.0'
+  spec.required_ruby_version = '>= 3.4.0'
 
   spec.files         = Dir['*.{md,txt}', '{lib}/**/*', 'vendor/*.{so,dylib,dll}']
   spec.require_path  = 'lib'
