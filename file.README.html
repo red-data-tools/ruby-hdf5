@@ -134,9 +134,10 @@
 <li>Dataset metadata: <code>shape</code>, <code>ndim</code>, <code>size</code>, <code>dtype</code>, <code>chunks</code>, <code>maxshape</code>, <code>fillvalue</code></li>
 <li>Storage: chunking, gzip, shuffle, Fletcher32, resize, and append</li>
 <li>Iteration: <code>each_block(max_bytes:)</code> and <code>each_chunk</code></li>
-<li>Attributes: <code>attrs[]</code>, <code>attrs[]=</code>, <code>attrs.create</code>, <code>attrs.modify</code>, <code>attrs.delete</code></li>
+<li>Attributes: <code>attrs[]</code>, <code>attrs[]=</code>, <code>attrs.create</code>, <code>attrs.write</code>, <code>attrs.modify</code>, <code>attrs.delete</code></li>
 </ul>
 <p>Datasets support Numo numeric arrays, scalar values, variable-length UTF-8 strings, h5py-compatible bool values, and h5py-compatible complex values.</p>
+<p>Use <code>dtype: :string</code> for empty string arrays and <code>HDF5::Empty.new(:string)</code> for Null strings.</p>
 <h2 id="Limitations">Limitations</h2>
 <ul>
 <li>Fixed-length strings, general compound / enum / reference types, and variable-length numeric types are unsupported.</li>
@@ -149,7 +150,7 @@
 <p>MIT. See <a href="LICENSE.txt">LICENSE.txt</a>.</p></div></div>
 
       <div id="footer">
-  Generated on Thu Sep 17 11:56:15 2026 by
+  Generated on Thu Sep 17 14:47:37 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>

@@ -229,16 +229,16 @@
       <pre class="lines">
 
 
-3
-4
 5
 6
 7
 8
-9</pre>
+9
+10
+11</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 3</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 5</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_dataset_id'>dataset_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attr_name'>attr_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@dataset_id</span> <span class='op'>=</span> <span class='id identifier rubyid_dataset_id'>dataset_id</span>
@@ -274,15 +274,15 @@
       <pre class="lines">
 
 
-39
-40
 41
 42
 43
-44</pre>
+44
+45
+46</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 39</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 41</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@attr_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -310,8 +310,6 @@
       <pre class="lines">
 
 
-11
-12
 13
 14
 15
@@ -336,10 +334,12 @@
 34
 35
 36
-37</pre>
+37
+38
+39</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 11</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 13</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_read'>read</span>
   <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aget_type</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='rparen'>)</span>
@@ -378,7 +378,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 11:56:20 2026 by
+  Generated on Thu Sep 17 14:47:42 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>

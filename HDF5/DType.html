@@ -751,11 +751,6 @@
       <pre class="lines">
 
 
-110
-111
-112
-113
-114
 115
 116
 117
@@ -765,10 +760,15 @@
 121
 122
 123
-124</pre>
+124
+125
+126
+127
+128
+129</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 110</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 115</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_symbol'>symbol</span><span class='comma'>,</span> <span class='id identifier rubyid_numo_class'>numo_class</span><span class='comma'>,</span> <span class='id identifier rubyid_memory_type_name'>memory_type_name</span><span class='comma'>,</span> <span class='id identifier rubyid_storage_type_name'>storage_type_name</span><span class='comma'>,</span> <span class='id identifier rubyid_kind'>kind</span><span class='comma'>,</span> <span class='id identifier rubyid_itemsize'>itemsize</span><span class='comma'>,</span> <span class='label'>byteorder:</span> <span class='symbol'>:little</span><span class='comma'>,</span>
                <span class='label'>precision:</span> <span class='id identifier rubyid_itemsize'>itemsize</span> <span class='op'>*</span> <span class='int'>8</span><span class='comma'>,</span> <span class='label'>offset:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>hdf5_class:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>encoding:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
@@ -1227,15 +1227,6 @@
       <pre class="lines">
 
 
-173
-174
-175
-176
-177
-178
-179
-180
-181
 182
 183
 184
@@ -1244,10 +1235,19 @@
 187
 188
 189
-190</pre>
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 182</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_bool_type_id'>bool_type_id</span><span class='lparen'>(</span><span class='label'>native:</span><span class='rparen'>)</span>
   <span class='ivar'>@bool_type_ids</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -1287,15 +1287,6 @@
       <pre class="lines">
 
 
-192
-193
-194
-195
-196
-197
-198
-199
-200
 201
 202
 203
@@ -1306,10 +1297,19 @@
 208
 209
 210
-211</pre>
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 192</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 201</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_complex_type_id'>complex_type_id</span><span class='lparen'>(</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span> <span class='label'>native:</span><span class='rparen'>)</span>
   <span class='ivar'>@complex_type_ids</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -1373,20 +1373,20 @@
       <pre class="lines">
 
 
-70
-71
-72
-73
-74
 75
 76
 77
 78
 79
-80</pre>
+80
+81
+82
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 75</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_for_bool_hdf5'>for_bool_hdf5</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='comma'>,</span> <span class='id identifier rubyid_itemsize'>itemsize</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_false_value'>false_value</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>FFI</span><span class='op'>::</span><span class='const'>MemoryPointer</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:int8</span><span class='rparen'>)</span>
@@ -1441,11 +1441,6 @@
       <pre class="lines">
 
 
-82
-83
-84
-85
-86
 87
 88
 89
@@ -1467,10 +1462,15 @@
 105
 106
 107
-108</pre>
+108
+109
+110
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 82</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 87</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_for_complex_hdf5'>for_complex_hdf5</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='comma'>,</span> <span class='id identifier rubyid_itemsize'>itemsize</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_component_size'>component_size</span> <span class='op'>=</span> <span class='id identifier rubyid_itemsize'>itemsize</span> <span class='op'>/</span> <span class='int'>2</span>
@@ -1541,11 +1541,6 @@
       <pre class="lines">
 
 
-35
-36
-37
-38
-39
 40
 41
 42
@@ -1574,10 +1569,15 @@
 65
 66
 67
-68</pre>
+68
+69
+70
+71
+72
+73</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 35</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 40</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_for_hdf5'>for_hdf5</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_type_class'>type_class</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Tget_class</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span>
@@ -1696,12 +1696,22 @@
 30
 31
 32
-33</pre>
+33
+34
+35
+36
+37
+38</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_for_symbol'>for_symbol</span><span class='lparen'>(</span><span class='id identifier rubyid_symbol'>symbol</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_symbol'>symbol</span> <span class='op'>==</span> <span class='symbol'>:string</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:string</span><span class='comma'>,</span> <span class='const'>Numo</span><span class='op'>::</span><span class='const'>RObject</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='symbol'>:string</span><span class='comma'>,</span> <span class='op'>::</span><span class='const'>FFI</span><span class='period'>.</span><span class='id identifier rubyid_type_size'>type_size</span><span class='lparen'>(</span><span class='symbol'>:pointer</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='label'>byteorder:</span> <span class='symbol'>:none</span><span class='comma'>,</span>
+               <span class='label'>hdf5_class:</span> <span class='symbol'>:H5T_STRING</span><span class='comma'>,</span> <span class='label'>encoding:</span> <span class='const'>Encoding</span><span class='op'>::</span><span class='const'>UTF_8</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
   <span class='id identifier rubyid_type'>type</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#TYPES-constant" title="HDF5::DType::TYPES (constant)">TYPES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_symbol'>symbol</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unsupported dtype: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_symbol'>symbol</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
   <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_symbol'>symbol</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_type'>type</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
@@ -1766,15 +1776,6 @@
       <pre class="lines">
 
 
-144
-145
-146
-147
-148
-149
-150
-151
-152
 153
 154
 155
@@ -1788,10 +1789,19 @@
 163
 164
 165
-166</pre>
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 144</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 153</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_castable_to?'>castable_to?</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='comma'>,</span> <span class='label'>casting:</span> <span class='symbol'>:safe</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unsupported casting mode: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_casting'>casting</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='qsymbols_beg'>%i[</span><span class='tstring_content'>safe</span><span class='words_sep'> </span><span class='tstring_content'>unsafe</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_casting'>casting</span><span class='rparen'>)</span>
@@ -1830,23 +1840,49 @@
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="UnsupportedTypeError.html" title="HDF5::UnsupportedTypeError (class)">UnsupportedTypeError</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-126
-127
-128
-129
-130
-131</pre>
+131
+132
+133
+134
+135
+136
+137
+138</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 126</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 131</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_memory_type_id'>memory_type_id</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="UnsupportedTypeError.html" title="HDF5::UnsupportedTypeError (class)">UnsupportedTypeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>String datatype IDs must be owned by the string codec caller</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:string</span>
+
   <span class='kw'>return</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_bool_type_id'>bool_type_id</span><span class='lparen'>(</span><span class='label'>native:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:bool</span>
   <span class='kw'>return</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_complex_type_id'>complex_type_id</span><span class='lparen'>(</span><span class='id identifier rubyid_itemsize'>itemsize</span><span class='comma'>,</span> <span class='label'>native:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:complex</span>
 
@@ -1866,23 +1902,49 @@
   
 
   
-</h3><table class="source_code">
+</h3><div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="UnsupportedTypeError.html" title="HDF5::UnsupportedTypeError (class)">UnsupportedTypeError</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-133
-134
-135
-136
-137
-138</pre>
+140
+141
+142
+143
+144
+145
+146
+147</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 133</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 140</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_storage_type_id'>storage_type_id</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="UnsupportedTypeError.html" title="HDF5::UnsupportedTypeError (class)">UnsupportedTypeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>String datatype IDs must be owned by the string codec caller</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:string</span>
+
   <span class='kw'>return</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_bool_type_id'>bool_type_id</span><span class='lparen'>(</span><span class='label'>native:</span> <span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:bool</span>
   <span class='kw'>return</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_complex_type_id'>complex_type_id</span><span class='lparen'>(</span><span class='id identifier rubyid_itemsize'>itemsize</span><span class='comma'>,</span> <span class='label'>native:</span> <span class='kw'>false</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:complex</span>
 
@@ -1908,12 +1970,12 @@
       <pre class="lines">
 
 
-140
-141
-142</pre>
+149
+150
+151</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 140</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 149</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_sym'>to_sym</span>
   <span class='ivar'>@symbol</span>
@@ -1960,12 +2022,12 @@
       <pre class="lines">
 
 
-168
-169
-170</pre>
+177
+178
+179</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 168</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/dtype.rb', line 177</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unsigned?'>unsigned?</span>
   <span class='ivar'>@symbol</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>uint</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1980,7 +2042,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 11:56:18 2026 by
+  Generated on Thu Sep 17 14:47:40 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
