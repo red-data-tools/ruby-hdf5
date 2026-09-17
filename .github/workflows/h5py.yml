@@ -1,0 +1,28 @@
+name: h5py interoperability
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 'ruby'
+          bundler-cache: true
+      - name: Set up Python
+        id: python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install hdf5
+        run: sudo apt-get install libhdf5-dev
+      - name: Install h5py
+        run: python -m pip install h5py
+      - name: Run h5py interoperability tests
+        env:
+          H5PY_PYTHON: ${{ steps.python.outputs.python-path }}
+        run: bundle exec ruby -Itest test/h5py_interop_test.rb
