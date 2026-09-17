@@ -2,129 +2,122 @@
 
 [![test](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml/badge.svg)](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml)
 
-Ruby bindings for the HDF5 library.
+Ruby bindings for HDF5 with Numo::NArray support.
 
-Ruby 3.4 or newer is required.
+## Requirements
 
-## Scope
-
-This gem currently provides practical high-level wrappers for:
-
-- opening and creating files
-- creating and traversing groups
-- multidimensional Numo numeric datasets and attributes
-- scalar, zero-length, and Null dataspaces
-- hyperslab reads and writes, block iteration, and chunk iteration
-- chunked storage, gzip, shuffle, Fletcher32, resize, and append
-- variable-length UTF-8 scalar and array datasets and attributes
-- h5py-compatible bool and complex datatypes
-
-Unsupported at this stage:
-
-- fixed-length strings and explicit string encoding options
-- general compound, enum, reference, and variable-length numeric types
-- fancy indexing, boolean masks, negative slice steps, and general broadcasting
-- SWMR, MPI, and VDS creation
-
-`Group#list_datasets` filters datasets from group entries by checking object type per entry.
-For very large groups, this may be slower than `Group#list_entries`.
-
-## HDF5 Versions
-
-The test matrix covers the system HDF5 library on Ubuntu and the current
-Homebrew HDF5 release on macOS. HDF5 1.10, 1.14, and 2.x use compatibility
-APIs verified at load time.
-
-HDF5 versions older than 1.10 are not supported.
+- Ruby 3.4 or later
+- HDF5 1.10 or later (`libhdf5` shared library)
 
 ## Install
 
-Add to your Gemfile:
+Add the gem to your Gemfile:
 
 ```ruby
 gem 'ruby-hdf5'
 ```
 
-Install:
+Then install dependencies:
 
 ```sh
 bundle install
 ```
 
-System library (`libhdf5`) is required.
-
-## Runtime Notes
-
-- The gem loads `libhdf5` through FFI.
-- If the shared library cannot be found automatically, set `HDF5_LIB_PATH`.
-
-Examples:
+Set `HDF5_LIB_PATH` only when `libhdf5` cannot be found automatically. It may be a library directory or a shared-library path.
 
 ```sh
-# Point to a directory containing libhdf5.so
-export HDF5_LIB_PATH=/usr/lib
-
-# Or point directly to the shared object
 export HDF5_LIB_PATH=/usr/lib/libhdf5.so
 ```
 
-## Quick Start
+## Usage
 
-### Read an existing file
-
-```ruby
-require 'hdf5'
-
-HDF5::File.open('example.h5') do |file|
-  dataset = file['foo/bar_int']
-  p dataset.shape
-  p dataset.dtype.to_sym
-  p dataset.read
-end
-```
-
-### Create and write a file
+Create a file and write a Numo array:
 
 ```ruby
 require 'hdf5'
 
-HDF5::File.create('numbers.h5') do |file|
-	matrix = Numo::SFloat.new(100, 64).seq
-	dataset = file.require_group('measurements').create_dataset(
-		'signal',
-		matrix,
-		chunks: :auto,
-		compression: :gzip
-	)
+matrix = Numo::SFloat.new(100, 64).seq
+
+HDF5::File.open('numbers.h5', 'w') do |file|
+	dataset = file.require_group('measurements').create_dataset('signal', matrix)
 	dataset.attrs['unit'] = 'a.u.'
-	dataset[0...10, true] = Numo::SFloat.zeros(10, 64)
 end
-
-reopened = HDF5::File.open('numbers.h5')
-p reopened['values']['ints'].read
-reopened.close
 ```
 
-## Error Handling
-
-High-level API failures raise `HDF5::Error`.
+Read data and inspect its type:
 
 ```ruby
-begin
-  HDF5::File.open('missing.h5')
-rescue HDF5::Error => e
-  warn e.message
+HDF5::File.open('numbers.h5') do |file|
+	dataset = file['measurements/signal']
+	p dataset.shape
+	p dataset.dtype.to_sym
+	p dataset.read
 end
 ```
 
-## Development
+Use a block with `HDF5::File.open` to close the file automatically. Supported modes are `r`, `r+`, `w`, `x`, and `a`.
 
-After more than a decade, it is clear that the Ruby community does not have enough resources to sustainably maintain an HDF5 library. For that reason, development of this library is intentionally AI-assisted. Something is better than nothing.
+## Common Tasks
 
-## Acknowledgement
+Read a row, a column, or a strided selection without reading the complete dataset:
 
-[https://github.com/edmundhighcock/hdf5](https://github.com/edmundhighcock/hdf5)
+```ruby
+HDF5::File.open('numbers.h5') do |file|
+	dataset = file['measurements/signal']
+	row = dataset[10, true]
+	column = dataset[true, 0]
+	every_tenth_row = dataset[HDF5.slice(0...100, step: 10), true]
+end
+```
+
+Append rows to an extendible dataset. Extendible datasets must use chunked storage:
+
+```ruby
+HDF5::File.open('samples.h5', 'w') do |file|
+	samples = file.create_dataset(
+		'samples',
+		shape: [0, 2],
+		dtype: :float32,
+		maxshape: [nil, 2],
+		chunks: [256, 2]
+	)
+	samples.append(Numo::SFloat[[1.0, 2.0], [3.0, 4.0]])
+end
+```
+
+Process a dataset in bounded-memory blocks:
+
+```ruby
+sum = 0.0
+
+HDF5::File.open('numbers.h5') do |file|
+	file['measurements/signal'].each_block(max_bytes: 4 * 1024 * 1024) do |_selection, block|
+		sum += block.sum
+	end
+end
+```
+
+## Main Operations
+
+- Hierarchy: `[]`, `create_group`, `require_group`, `keys`, `delete`, `move`
+- Datasets: `create_dataset`, `read`, `write`, `[]`, `[]=`, `read_into`
+- Dataset metadata: `shape`, `ndim`, `size`, `dtype`, `chunks`, `maxshape`, `fillvalue`
+- Storage: chunking, gzip, shuffle, Fletcher32, resize, and append
+- Iteration: `each_block(max_bytes:)` and `each_chunk`
+- Attributes: `attrs[]`, `attrs[]=`, `attrs.create`, `attrs.modify`, `attrs.delete`
+
+Datasets support Numo numeric arrays, scalar values, variable-length UTF-8 strings, h5py-compatible bool values, and h5py-compatible complex values.
+
+## Limitations
+
+- Fixed-length strings, general compound / enum / reference types, and variable-length numeric types are unsupported.
+- Fancy indexing, boolean masks, negative slice steps, and general broadcasting are unsupported.
+- SWMR, MPI, and VDS creation are unsupported.
+
+## Examples
+
+See [examples/README.md](examples/README.md) for standalone examples, ordered from basic file I/O through chunking, resizing, and links.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+MIT. See [LICENSE.txt](LICENSE.txt).
