@@ -194,6 +194,18 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'uses the configured fill value for unwritten data' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'fillvalue.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('values', shape: [3], dtype: :int16, fillvalue: 7)
+        assert_equal(7, dataset.fillvalue)
+        assert_equal(Numo::Int16[7, 7, 7], dataset.read)
+      end
+    end
+  end
+
   test 'preserves int64 values on create' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'int64-create.h5')

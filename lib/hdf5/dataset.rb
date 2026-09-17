@@ -32,7 +32,7 @@ module HDF5
 
     class << self
       def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
-                 compression_opts: nil, shuffle: false, fletcher32: false)
+                 compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil)
         narray = DataHelpers.normalize_data(data) unless data.nil?
         dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)
         shape ||= narray.shape
@@ -43,7 +43,8 @@ module HDF5
         chunks = :auto if maxshape && chunks.nil?
         dataspace_id = create_dataspace(shape, maxshape)
         raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
-        dcpl_id = create_property_list(shape, chunks:, compression:, compression_opts:, shuffle:, fletcher32:)
+        dcpl_id = create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:,
+                     fillvalue:)
 
         dataset = from_id(
           HDF5::FFI.H5Dcreate2(parent_id, name, dtype_object.storage_type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
@@ -98,25 +99,35 @@ module HDF5
         (1 << (::FFI.type_size(:ulong_long) * 8)) - 1
       end
 
-      def create_property_list(shape, chunks:, compression:, compression_opts:, shuffle:, fletcher32:)
-        return unless chunks || compression || compression_opts || shuffle || fletcher32
-        raise HDF5::Error, 'Chunked storage is not supported for scalar datasets' if shape.empty?
+      def create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:, fillvalue:)
+        chunked = chunks || compression || compression_opts || shuffle || fletcher32
+        return unless chunked || !fillvalue.nil?
+        raise HDF5::Error, 'Chunked storage is not supported for scalar datasets' if chunked && shape.empty?
         raise HDF5::Error, 'Unsupported compression' unless compression.nil? || compression == :gzip
         raise HDF5::Error, 'compression_opts requires compression: :gzip' if compression_opts && compression != :gzip
 
-        chunk_shape = chunks == :auto || chunks.nil? ? auto_chunk_shape(shape) : validate_chunk_shape(chunks, shape)
+        chunk_shape = chunks == :auto || chunks.nil? ? auto_chunk_shape(shape) : validate_chunk_shape(chunks, shape) if chunked
         compression_level = compression_opts || 4
         raise HDF5::Error, 'gzip compression_opts must be between 0 and 9' unless compression.nil? || compression_level.between?(0, 9)
 
         dcpl_id = HDF5::FFI.H5Pcreate(HDF5::FFI.H5P_CLS_DATASET_CREATE_ID_g)
         raise HDF5::Error, 'Failed to create dataset property list' if dcpl_id < 0
 
-        dims = ::FFI::MemoryPointer.new(:ulong_long, chunk_shape.length)
-        dims.write_array_of_ulong_long(chunk_shape)
-        check_property_status(HDF5::FFI.H5Pset_chunk(dcpl_id, chunk_shape.length, dims), 'set chunk dimensions')
+        if chunked
+          dims = ::FFI::MemoryPointer.new(:ulong_long, chunk_shape.length)
+          dims.write_array_of_ulong_long(chunk_shape)
+          check_property_status(HDF5::FFI.H5Pset_chunk(dcpl_id, chunk_shape.length, dims), 'set chunk dimensions')
+        end
         check_property_status(HDF5::FFI.H5Pset_shuffle(dcpl_id), 'enable shuffle') if shuffle
         check_property_status(HDF5::FFI.H5Pset_deflate(dcpl_id, compression_level), 'enable gzip') if compression == :gzip
         check_property_status(HDF5::FFI.H5Pset_fletcher32(dcpl_id), 'enable Fletcher32') if fletcher32
+        if !fillvalue.nil?
+          value = dtype_object.numo_class.cast(fillvalue)
+          raise HDF5::Error, 'fillvalue must be scalar' unless value.shape.empty?
+
+          check_property_status(HDF5::FFI.H5Pset_fill_value(dcpl_id, dtype_object.memory_type_id, DataHelpers.buffer_for(value)),
+                                'set fill value')
+        end
         dcpl_id
       rescue StandardError
         HDF5::FFI.H5Pclose(dcpl_id) if dcpl_id && dcpl_id >= 0
@@ -245,6 +256,20 @@ module HDF5
       maximums.read_array_of_uint64(rank).map { |dimension| dimension == unlimited ? nil : dimension }
     ensure
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+    end
+
+    def fillvalue
+      dtype_object = dtype
+      property_list_id = HDF5::FFI.H5Dget_create_plist(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset creation properties' if property_list_id < 0
+
+      buffer = ::FFI::MemoryPointer.new(:char, dtype_object.itemsize)
+      status = HDF5::FFI.H5Pget_fill_value(property_list_id, dtype_object.memory_type_id, buffer)
+      raise HDF5::Error, 'Failed to get dataset fill value' if status < 0
+
+      dtype_object.numo_class.from_binary(buffer.read_bytes(dtype_object.itemsize), []).extract
+    ensure
+      HDF5::FFI.H5Pclose(property_list_id) if property_list_id && property_list_id >= 0
     end
 
     def resize(new_shape)
