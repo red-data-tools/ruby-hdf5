@@ -53,13 +53,31 @@ module HDF5
     end
 
     def create_group(name, &block)
-      ensure_open!
-      self.class.create(@group_id, name, @context, &block)
+      group = HDF5::FFI::CALL_LOCK.synchronize do
+        ensure_open!
+        self.class.create(@group_id, name, @context)
+      end
+      return group unless block
+
+      begin
+        block.call(group)
+      ensure
+        group.close
+      end
     end
 
     def create_dataset(name, data = nil, **options, &block)
-      ensure_open!
-      Dataset.create(@group_id, name, data, context: @context, **options, &block)
+      dataset = HDF5::FFI::CALL_LOCK.synchronize do
+        ensure_open!
+        Dataset.create(@group_id, name, data, context: @context, **options)
+      end
+      return dataset unless block
+
+      begin
+        block.call(dataset)
+      ensure
+        dataset.close
+      end
     end
 
     def list_entries
@@ -148,6 +166,6 @@ module HDF5
       info[:type] == :H5O_TYPE_DATASET
     end
 
-    prepend FileContext.guard(:create_group, :create_dataset, :list_entries, :list_datasets, :[], :attrs)
+    prepend FileContext.guard(:list_entries, :list_datasets, :[], :attrs, :close, :closed?)
   end
 end

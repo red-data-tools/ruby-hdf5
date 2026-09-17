@@ -102,6 +102,6 @@ module HDF5
       self
     end
 
-    prepend FileContext.guard(*instance_methods(false))
+    prepend FileContext.guard(*(instance_methods(false) - %i[each_key open_dataset]))
   end
 end
