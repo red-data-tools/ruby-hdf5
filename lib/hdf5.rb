@@ -1,11 +1,26 @@
 # frozen_string_literal: true
 
 require 'ffi'
+require 'English'
 require 'numo/narray/alt'
 require_relative 'hdf5/version'
 
 module HDF5
   class Error < StandardError; end
+  class ClosedError < Error; end
+  class UnsupportedTypeError < Error; end
+  class UnsupportedFeatureError < Error; end
+  class ShapeError < Error; end
+  class ConversionError < Error; end
+  class NativeError < Error; end
+  class Empty
+    attr_reader :dtype
+
+    def initialize(dtype)
+      @dtype = dtype.is_a?(DType) ? dtype : DType.for_symbol(dtype)
+      freeze
+    end
+  end
   Slice = Struct.new(:range, :step, keyword_init: true)
   DEFAULT_PROPERTY_LIST = 0
 
@@ -46,6 +61,7 @@ end
 
 require_relative 'hdf5/ffi'
 
+require_relative 'hdf5/file_context'
 require_relative 'hdf5/dtype'
 require_relative 'hdf5/data_helpers'
 require_relative 'hdf5/selection'

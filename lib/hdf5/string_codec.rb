@@ -18,16 +18,63 @@ module HDF5
     end
 
     def buffer_for(value)
-      string = normalize(value)
-      string_pointer = ::FFI::MemoryPointer.from_string(string)
-      buffer = ::FFI::MemoryPointer.new(:pointer)
-      buffer.write_pointer(string_pointer)
-      [buffer, string_pointer]
+      buffer_for_values([normalize(value)])
+    end
+
+    def buffer_for_values(values)
+      pointers = values.map { |value| ::FFI::MemoryPointer.from_string(normalize(value)) }
+      buffer = ::FFI::MemoryPointer.new(:pointer, pointers.length)
+      buffer.write_array_of_pointer(pointers)
+      [buffer, pointers]
     end
 
     def read(buffer)
       pointer = buffer.read_pointer
       pointer.null? ? nil : pointer.read_string.force_encoding(Encoding::UTF_8)
+    end
+
+    def read_values(buffer, count, shape)
+      values = buffer.read_array_of_pointer(count).map do |pointer|
+        pointer.null? ? nil : pointer.read_string.force_encoding(Encoding::UTF_8)
+      end
+      return values.first if shape.empty?
+
+      Numo::RObject.cast(values).reshape(*shape)
+    end
+
+    def string_data?(value)
+      return true if value.is_a?(String)
+
+      values = if value.is_a?(Numo::RObject)
+                 value.to_a.flatten
+               elsif value.is_a?(Array)
+                 value.flatten
+               else
+                 []
+               end
+      !values.empty? && values.all? { |item| item.is_a?(String) }
+    end
+
+    def normalize_data(value)
+      return [[normalize(value)], []] if value.is_a?(String)
+      return [value.to_a.flatten.map { |item| normalize(item) }, value.shape] if value.is_a?(Numo::RObject)
+
+      shape = array_shape(value)
+      [value.flatten.map { |item| normalize(item) }, shape]
+    end
+
+    def array_shape(value)
+      return [] unless value.is_a?(Array)
+      raise HDF5::Error, 'String data must not be empty' if value.empty?
+
+      child_shapes = value.map { |item| array_shape(item) }
+      raise HDF5::ShapeError, 'String data must be rectangular' unless child_shapes.uniq.length == 1
+
+      [value.length, *child_shapes.first]
+    end
+
+    def variable?(type_id)
+      HDF5::FFI.H5Tis_variable_str(type_id).positive?
     end
 
     def normalize(value)
