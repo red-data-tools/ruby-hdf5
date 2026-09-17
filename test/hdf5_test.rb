@@ -92,6 +92,76 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'distinguishes null scalar and empty dataspaces' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'null.h5')
+
+      HDF5::File.create(path) do |file|
+        null = file.create_dataset('null', HDF5::Empty.new(:float32))
+        scalar = file.create_dataset('scalar', 1.5)
+        empty = file.create_dataset('empty', shape: [0, 3], dtype: :float32)
+        assert_nil(null.shape)
+        assert_nil(null.ndim)
+        assert_equal(0, null.size)
+        assert_kind_of(HDF5::Empty, null.read)
+        assert_equal(:float32, null.read.dtype.to_sym)
+        assert_equal([], scalar.shape)
+        assert_equal([0, 3], empty.shape)
+        assert_raise(HDF5::Error) { null.resize([1]) }
+      end
+    end
+  end
+
+  test 'describes datatype storage details' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'dtype.h5')
+
+      HDF5::File.create(path) do |file|
+        dtype = file.create_dataset('values', Numo::UInt16[1, 2]).dtype
+        assert_equal(:integer, dtype.kind)
+        assert_equal(:uint16, dtype.to_sym)
+        assert_equal(:little, dtype.byteorder)
+        assert_equal(16, dtype.precision)
+        assert_equal(0, dtype.offset)
+        assert_equal(:H5T_INTEGER, dtype.hdf5_class)
+      end
+    end
+  end
+
+  test 'enforces safe numeric casting for reads and writes' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'casting.h5')
+
+      HDF5::File.create(path) do |file|
+        integers = file.create_dataset('integers', Numo::Int16[1, 2])
+        floats = file.create_dataset('floats', Numo::DFloat[1.25, 2.5])
+        assert_equal(Numo::SFloat[1, 2], integers.read(dtype: :float32))
+        assert_raise(HDF5::ConversionError) { floats.read(dtype: :float32) }
+        assert_equal(Numo::SFloat[1.25, 2.5], floats.read(dtype: :float32, casting: :unsafe))
+        assert_raise(HDF5::ConversionError) { integers.write(Numo::Int64[3, 4]) }
+        integers.write(Numo::Int64[3, 4], casting: :unsafe)
+        assert_equal(Numo::Int16[3, 4], integers.read)
+      end
+    end
+  end
+
+  test 'round trips bool and complex data' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'special-numeric.h5')
+      bits = Numo::Bit[[0, 1], [1, 0]]
+      complex64 = Numo::SComplex[Complex(1, 2), Complex(3, 4)]
+      complex128 = Numo::DComplex[Complex(5, 6)]
+
+      HDF5::File.create(path) do |file|
+        assert_equal(bits, file.create_dataset('bits', bits).read)
+        assert_equal(complex64, file.create_dataset('complex64', complex64).read)
+        assert_equal(complex128, file.create_dataset('complex128', complex128).read)
+        file.attrs['enabled'] = true
+        assert_true(file.attrs['enabled'])
+      end
+    end
+  end
+
   test 'reads a multidimensional selection' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'selection.h5')
@@ -177,6 +247,31 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'limits automatic chunks to the target byte size' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'auto-chunk.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('matrix', shape: [1000, 1000], dtype: :float64, chunks: :auto)
+        assert_operator(dataset.chunks.inject(8, :*), :<=, 256 * 1024)
+        assert_true(dataset.chunks.all?(&:positive?))
+      end
+    end
+  end
+
+  test 'writing an empty selection is a no-op' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'empty-selection.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('values', [1, 2, 3])
+        empty = Numo::Int64.zeros(0)
+        assert_same(empty, dataset.write(empty, selection: [1...1]))
+        assert_equal(Numo::Int64[1, 2, 3], dataset.read)
+      end
+    end
+  end
+
   test 'round trips a UTF-8 string dataset' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'string.h5')
@@ -186,6 +281,25 @@ class HDF5Test < Test::Unit::TestCase
         assert_equal('hello, world', dataset.read)
         dataset.write('Ruby HDF5')
         assert_equal('Ruby HDF5', dataset.read)
+      end
+    end
+  end
+
+  test 'round trips multidimensional UTF-8 string datasets and attributes' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'string-arrays.h5')
+      strings = [['alpha', '日本語'], ['gamma', 'delta']]
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('labels', strings)
+        assert_equal([2, 2], dataset.shape)
+        assert_equal(strings, dataset.read.to_a)
+        dataset[1, true] = Numo::RObject['epsilon', 'zeta']
+        assert_equal([['alpha', '日本語'], ['epsilon', 'zeta']], dataset.read.to_a)
+        dataset.attrs['names'] = strings
+        assert_equal(strings, dataset.attrs['names'].to_a)
+        dataset.attrs.modify('names', [['one', 'two'], ['three', 'four']])
+        assert_equal([['one', 'two'], ['three', 'four']], dataset.attrs['names'].to_a)
       end
     end
   end
@@ -233,6 +347,10 @@ class HDF5Test < Test::Unit::TestCase
         dataset.append(Numo::Int16[[5, 6]])
         assert_equal([3, 2], dataset.shape)
         assert_equal(Numo::Int16[[1, 2], [3, 4], [5, 6]], dataset.read)
+        assert_same(dataset, dataset.append(Numo::Int16.zeros(0, 2)))
+        assert_equal([3, 2], dataset.shape)
+        assert_raise(HDF5::ConversionError) { dataset.append(Numo::Int64[[7, 8]]) }
+        assert_equal([3, 2], dataset.shape)
         assert_raise(HDF5::Error) { dataset.resize([4, 3]) }
       end
     end
@@ -284,6 +402,31 @@ class HDF5Test < Test::Unit::TestCase
 
       HDF5::File.open(path) do |file|
         assert_equal(Numo::Int64[10, 20, 30], file['values']['ints'].read)
+      end
+    end
+  end
+
+  test 'closing a file invalidates its child objects' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'lifetime.h5')
+      file = HDF5::File.create(path)
+      group = file.create_group('values')
+      dataset = group.create_dataset('ints', [10, 20, 30])
+      attrs = dataset.attrs
+
+      file.close
+
+      assert_true(file.closed?)
+      assert_true(group.closed?)
+      assert_true(dataset.closed?)
+      assert_raise(HDF5::ClosedError) { file.keys }
+      assert_raise(HDF5::ClosedError) { group.keys }
+      assert_raise(HDF5::ClosedError) { dataset.read }
+      assert_raise(HDF5::ClosedError) { attrs['unit'] = 'count' }
+      assert_nothing_raised do
+        dataset.close
+        group.close
+        file.close
       end
     end
   end
@@ -400,8 +543,117 @@ class HDF5Test < Test::Unit::TestCase
         group.move('original', 'renamed')
         assert_false(group.key?('original'))
         assert_equal(Numo::Int64[1], group['renamed'].read)
-        group.delete('renamed')
+        group.create_hard_link('renamed', 'hard-copy')
+        group.create_soft_link('/parent/renamed', 'soft-copy')
+        group.create_soft_link('/missing', 'broken')
+        assert_equal({ type: :hard }, group.link_info('hard-copy'))
+        assert_equal({ type: :soft, target: '/parent/renamed' }, group.link_info('soft-copy'))
+        assert_equal({ type: :soft, target: '/missing' }, group.link_info('broken'))
+        assert_true(group.key?('broken'))
+        assert_equal(Numo::Int64[1], group['soft-copy'].read)
+        group.delete('renamed').delete('hard-copy').delete('soft-copy').delete('broken')
         assert_false(group.key?('renamed'))
+      end
+    end
+  end
+
+  test 'provides common hierarchy and dataset convenience APIs' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'convenience.h5')
+
+      HDF5::File.create(path) do |file|
+        group = file.require_group('measurements/nested')
+        dataset = group.create_dataset('values', Numo::Int16[[1, 2], [3, 4]])
+        assert_equal(2, dataset.ndim)
+        assert_equal(4, dataset.size)
+        assert_equal([[1, 2], [3, 4]], dataset.read_array)
+        assert_equal([1, 2, 3, 4], dataset.read_array(flatten: true))
+        assert_equal(['measurements'], file.each_key.to_a)
+        group.open_dataset('values') { |opened| assert_equal(dataset.read, opened.read) }
+      end
+    end
+  end
+
+  test 'manages and modifies attributes without replacing their type' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'attribute-manager.h5')
+
+      HDF5::File.create(path) do |file|
+        attrs = file.create_dataset('values', [1]).attrs
+        attrs.create('scale', Numo::Int16.cast(2))
+        assert_equal(['scale'], attrs.keys)
+        assert_true(attrs.key?('scale'))
+        attrs.modify('scale', 4)
+        assert_equal(4, attrs['scale'])
+        assert_raise(HDF5::Error) { attrs.modify('scale', [1, 2]) }
+        assert_raise(HDF5::Error) { attrs.create('scale', 5) }
+        assert_same(attrs, attrs.delete('scale'))
+        assert_false(attrs.key?('scale'))
+      end
+    end
+  end
+
+  test 'retains a handle when native close fails so close can be retried' do
+    context = HDF5::FileContext.new(100)
+    context.register(200, :group)
+    calls = 0
+    replacement = lambda do |_id|
+      calls += 1
+      calls == 1 ? -1 : 0
+    end
+
+    replace_ffi_method(:H5Gclose, replacement) do
+      assert_raise(HDF5::Error) { context.close(200) }
+      assert_nothing_raised { context.close(200) }
+    end
+    assert_equal(2, calls)
+  end
+
+  test 'supports automatic chunks for variable-length string datasets' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'string-chunks.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('labels', %w[one two three], chunks: :auto, compression: :gzip)
+        assert_equal(%w[one two three], dataset.read.to_a)
+        assert_equal([3], dataset.chunks)
+      end
+    end
+  end
+
+  test 'rejects append to a Null dataset with an HDF5 error' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'null-append.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('null', HDF5::Empty.new(:int16))
+        assert_raise(HDF5::Error) { dataset.append(Numo::Int16[1]) }
+      end
+    end
+  end
+
+  test 'removes a newly created dataset when its initial write fails' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'failed-create.h5')
+
+      HDF5::File.create(path) do |file|
+        replace_ffi_method(:H5Dwrite, ->(*_args) { -1 }) do
+          assert_raise(HDF5::Error) { file.create_dataset('partial', [1, 2]) }
+        end
+        assert_false(file.key?('partial'))
+      end
+    end
+  end
+
+  test 'reports failure to reclaim variable-length string memory' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'string-reclaim.h5')
+
+      HDF5::File.create(path) { |file| file.create_dataset('labels', %w[one two]) }
+      HDF5::File.open(path) do |file|
+        replace_ffi_method(:H5Dvlen_reclaim, ->(*_args) { -1 }) do
+          assert_raise(HDF5::Error) { file['labels'].read }
+        end
       end
     end
   end
