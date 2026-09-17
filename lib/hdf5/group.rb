@@ -3,10 +3,10 @@ module HDF5
     include Hierarchy
 
     class << self
-      def create(parent_id, name)
+      def create(parent_id, name, context = nil)
         group = from_id(
           HDF5::FFI.H5Gcreate2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
-                               HDF5::DEFAULT_PROPERTY_LIST), name
+                               HDF5::DEFAULT_PROPERTY_LIST), name, context
         )
         return group unless block_given?
 
@@ -17,8 +17,8 @@ module HDF5
         end
       end
 
-      def open(parent_id, name)
-        group = from_id(HDF5::FFI.H5Gopen2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
+      def open(parent_id, name, context = nil)
+        group = from_id(HDF5::FFI.H5Gopen2(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST), name, context)
         return group unless block_given?
 
         begin
@@ -30,33 +30,40 @@ module HDF5
 
       private
 
-      def from_id(group_id, name)
+      def from_id(group_id, name, context)
         group = allocate
-        group.send(:initialize_from_id, group_id, name)
+        group.send(:initialize_from_id, group_id, name, context)
         group
       end
     end
 
     def initialize(file_id, name)
-      initialize_from_id(HDF5::FFI.H5Gopen2(file_id, name, HDF5::DEFAULT_PROPERTY_LIST), name)
+      initialize_from_id(HDF5::FFI.H5Gopen2(file_id, name, HDF5::DEFAULT_PROPERTY_LIST), name, nil)
     end
 
     def close
       return if @group_id.nil?
 
-      HDF5::FFI.H5Gclose(@group_id)
+      @context ? @context.close(@group_id) : HDF5::FFI.H5Gclose(@group_id)
       @group_id = nil
     end
 
+    def closed?
+      @group_id.nil? || (@context && @context.closed?)
+    end
+
     def create_group(name, &block)
-      self.class.create(@group_id, name, &block)
+      ensure_open!
+      self.class.create(@group_id, name, @context, &block)
     end
 
     def create_dataset(name, data = nil, **options, &block)
-      Dataset.create(@group_id, name, data, **options, &block)
+      ensure_open!
+      Dataset.create(@group_id, name, data, context: @context, **options, &block)
     end
 
     def list_entries
+      ensure_open!
       entries = []
       callback = ::FFI::Function.new(:int, %i[int64_t string pointer pointer]) do |_, name, _, _|
         entries << name
@@ -78,30 +85,41 @@ module HDF5
     end
 
     def [](name)
+      ensure_open!
       if group?(name)
-        self.class.open(@group_id, name)
+        self.class.open(@group_id, name, @context)
       elsif dataset?(name)
-        Dataset.open(@group_id, name)
+        Dataset.open(@group_id, name, context: @context)
       else
         raise HDF5::Error, "Group or dataset not found: #{name}"
       end
     end
 
     def attrs
-      @attrs ||= AttributeManager.new(@group_id)
+      ensure_open!
+      @attrs ||= AttributeManager.new(@group_id, @context)
     end
 
     private
 
     def hdf5_id
+      ensure_open!
       @group_id
     end
 
-    def initialize_from_id(group_id, name)
+    def initialize_from_id(group_id, name, context)
       raise HDF5::Error, "Failed to open group: #{name}" if group_id < 0
 
       @group_id = group_id
       @name = name
+      @context = context
+      @context.register(group_id, :group) if @context
+    end
+
+    def ensure_open!
+      raise ClosedError, 'HDF5 group is closed' if @group_id.nil?
+
+      @context&.ensure_open!(@group_id)
     end
 
     def group?(name)
@@ -129,5 +147,7 @@ module HDF5
              end
       info[:type] == :H5O_TYPE_DATASET
     end
+
+    prepend FileContext.guard(:create_group, :create_dataset, :list_entries, :list_datasets, :[], :attrs)
   end
 end

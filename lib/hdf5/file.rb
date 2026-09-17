@@ -67,21 +67,36 @@ module HDF5
     end
 
     def close
-      return if @file_id.nil?
+      return if @file_id.nil? || @context.closed?
 
-      HDF5::FFI.H5Fclose(@file_id)
+      @context.close_file
       @file_id = nil
     end
 
+    def closed?
+      @file_id.nil? || @context.closed?
+    end
+
+    def flush
+      ensure_open!
+      status = HDF5::FFI.H5Fflush(@file_id, :H5F_SCOPE_GLOBAL)
+      raise HDF5::Error, 'Failed to flush file' if status < 0
+
+      self
+    end
+
     def create_group(name, &block)
-      Group.create(@file_id, name, &block)
+      ensure_open!
+      Group.create(@file_id, name, @context, &block)
     end
 
     def create_dataset(name, data = nil, **options, &block)
-      Dataset.create(@file_id, name, data, **options, &block)
+      ensure_open!
+      Dataset.create(@file_id, name, data, context: @context, **options, &block)
     end
 
     def list_entries
+      ensure_open!
       list = []
       callback = ::FFI::Function.new(:int, %i[int64_t string pointer pointer]) do |_, name, _, _|
         list << name
@@ -99,22 +114,25 @@ module HDF5
     end
 
     def [](name)
+      ensure_open!
       if group?(name)
-        Group.open(@file_id, name)
+        Group.open(@file_id, name, @context)
       elsif dataset?(name)
-        Dataset.open(@file_id, name)
+        Dataset.open(@file_id, name, context: @context)
       else
         raise HDF5::Error, "Group or dataset not found: #{name}"
       end
     end
 
     def attrs
-      @attrs ||= AttributeManager.new(@file_id)
+      ensure_open!
+      @attrs ||= AttributeManager.new(@file_id, @context)
     end
 
     private
 
     def hdf5_id
+      ensure_open!
       @file_id
     end
 
@@ -124,6 +142,13 @@ module HDF5
       @filename = filename
       @mode = mode
       @file_id = file_id
+      @context = FileContext.new(file_id)
+    end
+
+    def ensure_open!
+      raise ClosedError, 'HDF5 file is closed' if @file_id.nil?
+
+      @context.ensure_open!(@file_id)
     end
 
     def group?(name)
@@ -151,5 +176,7 @@ module HDF5
              end
       info[:type] == :H5O_TYPE_DATASET
     end
+
+    prepend FileContext.guard(:flush, :create_group, :create_dataset, :list_entries, :[], :attrs)
   end
 end
