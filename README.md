@@ -9,26 +9,30 @@ Ruby bindings for the HDF5 library.
 This gem currently provides practical high-level wrappers for:
 
 - opening and creating files
-- creating groups
-- creating, writing, and reading one-dimensional numeric datasets
-- reading and writing numeric attributes
+- creating and traversing groups
+- multidimensional Numo numeric datasets and attributes
+- scalar, zero-length, and Null dataspaces
+- hyperslab reads and writes, block iteration, and chunk iteration
+- chunked storage, gzip, shuffle, Fletcher32, resize, and append
+- variable-length UTF-8 scalar and array datasets and attributes
+- h5py-compatible bool and complex datatypes
 
 Unsupported at this stage:
 
-- string dataset read/write
-- multidimensional array write
-
-Integer datasets and integer attributes currently use native C `int` under the hood.
-Values outside that range are rejected with `HDF5::Error` to avoid silent overflow.
+- fixed-length strings and explicit string encoding options
+- general compound, enum, reference, and variable-length numeric types
+- fancy indexing, boolean masks, negative slice steps, and general broadcasting
+- SWMR, MPI, and VDS creation
 
 `Group#list_datasets` filters datasets from group entries by checking object type per entry.
 For very large groups, this may be slower than `Group#list_entries`.
 
-## Supported HDF5 Versions
+## HDF5 Versions
 
-- HDF5 1.10
-- HDF5 1.14
-- HDF5 2.x
+The current implementation is tested with HDF5 1.10.10 on Linux. HDF5 1.14,
+macOS, and Windows are planned compatibility targets but are not verified by
+the current test environment. Unknown major versions are not treated as
+compatible automatically.
 
 HDF5 versions older than 1.10 are not supported.
 
@@ -71,11 +75,10 @@ export HDF5_LIB_PATH=/usr/lib/libhdf5.so
 require 'hdf5'
 
 HDF5::File.open('example.h5') do |file|
-	group = file['foo']
-	dataset = group['bar_int']
-	p dataset.shape
-	p dataset.dtype
-	p dataset.read
+  dataset = file['foo/bar_int']
+  p dataset.shape
+  p dataset.dtype.to_sym
+  p dataset.read
 end
 ```
 
@@ -85,9 +88,15 @@ end
 require 'hdf5'
 
 HDF5::File.create('numbers.h5') do |file|
-	file.create_group('values') do |group|
-		group.create_dataset('ints', [1, 2, 3, 4])
-	end
+	matrix = Numo::SFloat.new(100, 64).seq
+	dataset = file.require_group('measurements').create_dataset(
+		'signal',
+		matrix,
+		chunks: :auto,
+		compression: :gzip
+	)
+	dataset.attrs['unit'] = 'a.u.'
+	dataset[0...10, true] = Numo::SFloat.zeros(10, 64)
 end
 
 reopened = HDF5::File.open('numbers.h5')
@@ -101,9 +110,9 @@ High-level API failures raise `HDF5::Error`.
 
 ```ruby
 begin
-	HDF5::File.open('missing.h5')
+  HDF5::File.open('missing.h5')
 rescue HDF5::Error => e
-	warn e.message
+  warn e.message
 end
 ```
 
