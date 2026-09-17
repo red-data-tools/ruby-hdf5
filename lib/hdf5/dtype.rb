@@ -17,7 +17,7 @@ module HDF5
     }.freeze
 
     attr_reader :numo_class, :memory_type_name, :storage_type_name, :kind, :itemsize, :byteorder, :precision, :offset,
-                :hdf5_class
+                :hdf5_class, :encoding
 
     def self.for_numo(value)
       type = TYPES.values.find { |numo_class,| value.is_a?(numo_class) }
@@ -35,6 +35,10 @@ module HDF5
     def self.for_hdf5(type_id)
       type_class = HDF5::FFI.H5Tget_class(type_id)
       itemsize = HDF5::FFI.H5Tget_size(type_id)
+      if type_class == :H5T_STRING
+        return new(:string, Numo::RObject, nil, nil, :string, itemsize, byteorder: :none,
+                   hdf5_class: type_class, encoding: StringCodec.encoding_for(type_id))
+      end
       return for_bool_hdf5(type_id, itemsize) if type_class == :H5T_ENUM
       return for_complex_hdf5(type_id, itemsize) if type_class == :H5T_COMPOUND
 
@@ -83,22 +87,28 @@ module HDF5
               HDF5::FFI.H5Tget_nmembers(type_id) == 2 &&
               HDF5::FFI.H5Tget_member_offset(type_id, real_index) == 0 &&
               HDF5::FFI.H5Tget_member_offset(type_id, imaginary_index) == component_size
+      byteorders = []
       [real_index, imaginary_index].each do |index|
         next unless index >= 0
 
         member_type_id = HDF5::FFI.H5Tget_member_type(type_id, index)
-        valid &&= member_type_id >= 0 && HDF5::FFI.H5Tget_class(member_type_id) == :H5T_FLOAT &&
-                  HDF5::FFI.H5Tget_size(member_type_id) == component_size
-        HDF5::FFI.H5Tclose(member_type_id) if member_type_id >= 0
+        begin
+          member_dtype = member_type_id >= 0 ? for_hdf5(member_type_id) : nil
+          valid &&= member_dtype && member_dtype.kind == :float && member_dtype.itemsize == component_size
+          byteorders << member_dtype.byteorder if member_dtype
+        ensure
+          HDF5::FFI.H5Tclose(member_type_id) if member_type_id >= 0
+        end
       end
+      valid &&= byteorders.length == 2 && byteorders.uniq.length == 1
       raise UnsupportedTypeError, 'Unsupported HDF5 compound datatype' unless valid
 
       symbol = itemsize == 8 ? :complex64 : :complex128
-      new(symbol, *TYPES.fetch(symbol), hdf5_class: :H5T_COMPOUND)
+      new(symbol, *TYPES.fetch(symbol), byteorder: byteorders.first, hdf5_class: :H5T_COMPOUND)
     end
 
     def initialize(symbol, numo_class, memory_type_name, storage_type_name, kind, itemsize, byteorder: :little,
-                   precision: itemsize * 8, offset: 0, hdf5_class: nil)
+                   precision: itemsize * 8, offset: 0, hdf5_class: nil, encoding: nil)
       @symbol = symbol
       @numo_class = numo_class
       @memory_type_name = memory_type_name
@@ -108,6 +118,7 @@ module HDF5
       @byteorder = byteorder
       @precision = precision
       @offset = offset
+      @encoding = encoding
       @hdf5_class = hdf5_class || (kind == :integer ? :H5T_INTEGER : :H5T_FLOAT)
       freeze
     end
@@ -141,10 +152,13 @@ module HDF5
         return itemsize < target.itemsize
       end
       return itemsize <= target.itemsize if kind == :float && target.kind == :float
+      return itemsize <= target.itemsize if kind == :complex && target.kind == :complex
+      return itemsize <= target.itemsize / 2 if kind == :float && target.kind == :complex
 
-      if kind == :integer && target.kind == :float
+      if kind == :integer && %i[float complex].include?(target.kind)
         significant_bits = unsigned? ? itemsize * 8 : itemsize * 8 - 1
-        mantissa_bits = target.itemsize == 4 ? 24 : 53
+        size = target.kind == :complex ? target.itemsize / 2 : target.itemsize
+        mantissa_bits = size == 4 ? 24 : 53
         return significant_bits <= mantissa_bits
       end
 

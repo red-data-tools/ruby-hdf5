@@ -14,6 +14,8 @@ module HDF5
 
       space_id = HDF5::FFI.H5Aget_space(@attr_id)
       raise HDF5::Error, 'Failed to get attribute dataspace' if space_id < 0
+      return HDF5::Empty.new(DType.for_hdf5(type_id)) if HDF5::FFI.H5Sget_simple_extent_type(space_id) == :H5S_NULL
+
       return read_string(type_id, space_id) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
 
       dtype_object = DType.for_hdf5(type_id)
@@ -66,7 +68,7 @@ module HDF5
       status = HDF5::FFI.H5Aread(@attr_id, type_id, buffer)
       raise HDF5::Error, 'Failed to read string attribute' if status < 0
 
-      HDF5::StringCodec.read_values(buffer, count, attribute_shape)
+      HDF5::StringCodec.read_values(buffer, count, attribute_shape, encoding: HDF5::StringCodec.encoding_for(type_id))
     ensure
       if buffer
         active_error = $ERROR_INFO
@@ -134,7 +136,7 @@ module HDF5
       write(attr_name, value)
     end
 
-    def modify(attr_name, value)
+    def modify(attr_name, value, casting: :safe)
       @context&.ensure_open!(@dataset_id)
       raise HDF5::Error, "Attribute not found: #{attr_name}" unless key?(attr_name)
 
@@ -144,28 +146,34 @@ module HDF5
       type_id = HDF5::FFI.H5Aget_type(attr_id)
       space_id = HDF5::FFI.H5Aget_space(attr_id)
       raise HDF5::Error, "Failed to inspect attribute: #{attr_name}" if type_id < 0 || space_id < 0
+      if HDF5::FFI.H5Sget_simple_extent_type(space_id) == :H5S_NULL
+        unless value.is_a?(HDF5::Empty) && value.dtype.to_sym == DType.for_hdf5(type_id).to_sym
+          raise HDF5::ShapeError, 'Cannot assign a value to a Null attribute'
+        end
+        return value
+      end
 
       if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
         unless HDF5::StringCodec.variable?(type_id)
           raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported'
         end
 
-        string_values, string_shape = HDF5::StringCodec.normalize_data(value)
+        encoding = HDF5::StringCodec.encoding_for(type_id)
+        string_values, string_shape = HDF5::StringCodec.normalize_data(value, encoding:)
         unless string_shape == attribute_shape(space_id)
           raise HDF5::ShapeError,
                 'Attribute shape must not change when modifying'
         end
 
-        buffer, _string_pointers = HDF5::StringCodec.buffer_for_values(string_values)
+        buffer, _string_pointers = HDF5::StringCodec.buffer_for_values(string_values, encoding:)
         status = HDF5::FFI.H5Awrite(attr_id, type_id, buffer)
       else
         dtype_object = DType.for_hdf5(type_id)
-        values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data')
+        values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data', dtype: dtype_object, casting:, convert: false)
         expected_shape = attribute_shape(space_id)
         raise HDF5::Error, 'Attribute shape must not change when modifying' unless values.shape == expected_shape
 
-        converted = dtype_object.numo_class.cast(values)
-        status = HDF5::FFI.H5Awrite(attr_id, dtype_object.memory_type_id, HDF5::DataHelpers.buffer_for(converted))
+        status = HDF5::FFI.H5Awrite(attr_id, DType.for_numo(values).memory_type_id, HDF5::DataHelpers.buffer_for(values))
       end
       raise HDF5::Error, "Failed to modify attribute: #{attr_name}" if status < 0
 
@@ -178,10 +186,11 @@ module HDF5
 
     def write(attr_name, value)
       @context&.ensure_open!(@dataset_id)
+      empty_data = value.is_a?(HDF5::Empty)
       string_data = HDF5::StringCodec.string_data?(value)
       string_values, string_shape = HDF5::StringCodec.normalize_data(value) if string_data
-      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data') unless string_data
-      dtype_object = DType.for_numo(values) unless string_data
+      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data') unless string_data || empty_data
+      dtype_object = empty_data ? value.dtype : DType.for_numo(values) unless string_data
       type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
 
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
@@ -192,7 +201,7 @@ module HDF5
         raise HDF5::Error, "Failed to replace attribute: #{attr_name}" if status < 0
       end
 
-      dataspace_id = create_dataspace(string_data ? string_shape : values.shape)
+      dataspace_id = create_dataspace(empty_data ? nil : (string_data ? string_shape : values.shape))
       raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
 
       attr_id = HDF5::FFI.H5Acreate2(
@@ -204,6 +213,7 @@ module HDF5
         HDF5::DEFAULT_PROPERTY_LIST
       )
       raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
+      return value if empty_data
 
       buffer, _string_pointers = if string_data
                                    HDF5::StringCodec.buffer_for_values(string_values)
@@ -236,6 +246,8 @@ module HDF5
     end
 
     def create_dataspace(shape)
+      return HDF5::FFI.H5Screate(:H5S_NULL) if shape.nil?
+
       return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
 
       dimensions = ::FFI::MemoryPointer.new(:ulong_long, shape.length)

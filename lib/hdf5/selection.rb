@@ -17,8 +17,10 @@ module HDF5
       @stride = []
       @count = []
       @result_shape = []
+      @result_axes = []
 
-      selectors.zip(shape).each do |selector, dimension|
+      selectors.zip(shape).each_with_index do |(selector, dimension), axis|
+        @result_axes << axis unless selector.is_a?(Integer)
         normalize_axis(selector, dimension)
       end
     end
@@ -29,6 +31,20 @@ module HDF5
 
     def size
       count.inject(1, :*)
+    end
+
+    def block(ranges)
+      result = dup
+      starts = start.dup
+      counts = count.dup
+      @result_axes.zip(ranges).each do |axis, range|
+        starts[axis] += range.begin * stride[axis]
+        counts[axis] = range.end - range.begin
+      end
+      result.instance_variable_set(:@start, starts)
+      result.instance_variable_set(:@count, counts)
+      result.instance_variable_set(:@result_shape, ranges.map { |range| range.end - range.begin })
+      result
     end
 
     private

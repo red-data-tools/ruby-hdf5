@@ -2,13 +2,16 @@ module HDF5
   class Dataset
     class << self
       def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
-                 compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil, context: nil)
+                 compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil, context: nil, casting: :safe)
+        raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
+
         empty_data = data.is_a?(HDF5::Empty)
         string_data = HDF5::StringCodec.string_data?(data)
         _string_values, string_shape = HDF5::StringCodec.normalize_data(data) if string_data
         unless data.nil? || string_data || empty_data
           narray = HDF5::DataHelpers.normalize_data(data,
-                                                    label: 'Dataset data')
+                                                    label: 'Dataset data', dtype: dtype && DType.for_symbol(dtype), casting:,
+                                                    convert: false)
         end
         unless string_data
           dtype_object = if empty_data
@@ -19,7 +22,6 @@ module HDF5
         end
         type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
         shape = string_data ? string_shape : narray.shape if shape.nil? && !data.nil? && !empty_data
-        raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
         raise HDF5::Error, 'Dataset shape must match data shape' if narray && shape != narray.shape
         raise HDF5::ShapeError, 'Dataset shape must match string data shape' if string_data && shape != string_shape
 
@@ -31,7 +33,7 @@ module HDF5
         raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
 
         dcpl_id = create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:,
-                                                            fillvalue:)
+                                                            fillvalue:, casting:)
 
         dataset = from_id(
           HDF5::FFI.H5Dcreate2(parent_id, name, type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
@@ -39,6 +41,7 @@ module HDF5
         )
         dataset.write(data) if string_data
         dataset.write(narray) if narray
+        initialized = true
         return dataset unless block_given?
 
         begin
@@ -47,7 +50,7 @@ module HDF5
           dataset.close
         end
       rescue StandardError
-        if dataset
+        if dataset && !initialized
           dataset.close unless dataset.closed?
           HDF5::FFI.H5Ldelete(parent_id, name, HDF5::DEFAULT_PROPERTY_LIST)
         end
@@ -104,7 +107,7 @@ module HDF5
       end
 
       def create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:,
-                               fillvalue:)
+                               fillvalue:, casting:)
         chunked = chunks || compression || compression_opts || shuffle || fletcher32
         return unless chunked || !fillvalue.nil?
         raise HDF5::Error, 'Chunked storage is not supported for scalar datasets' if chunked && shape.empty?
@@ -152,7 +155,7 @@ module HDF5
         end
         check_property_status(HDF5::FFI.H5Pset_fletcher32(dcpl_id), 'enable Fletcher32') if fletcher32
         unless fillvalue.nil?
-          value = dtype_object.numo_class.cast(fillvalue)
+          value = HDF5::DataHelpers.normalize_data(fillvalue, dtype: dtype_object, casting:, label: 'Fill value')
           raise HDF5::Error, 'fillvalue must be scalar' unless value.shape.empty?
 
           check_property_status(HDF5::FFI.H5Pset_fill_value(dcpl_id, dtype_object.memory_type_id, HDF5::DataHelpers.buffer_for(value)),
@@ -223,43 +226,24 @@ module HDF5
       ensure_open!
       return write_string(data, selection:) if HDF5::StringCodec.string_data?(data)
 
-      normalized_selection = Selection.normalize(selection, shape)
-      values = if data.is_a?(Numeric)
-                 target_dtype = dtype
-                 if normalized_selection.scalar?
-                   target_dtype.numo_class.cast(data)
-                 else
-                   target_dtype.numo_class.ones(*normalized_selection.result_shape) * data
-                 end
-               else
-                 HDF5::DataHelpers.normalize_data(data, label: 'Dataset data')
-               end
+      current_shape = shape
+      raise HDF5::Error, 'Cannot write to a Null dataset' if current_shape.nil?
+
+      normalized_selection = Selection.normalize(selection, current_shape)
+      target_dtype = dtype
+      raise ConversionError, 'String datasets require string data' if target_dtype.kind == :string
+
+      values = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data', dtype: target_dtype, casting:, convert: false)
+      if HDF5::DataHelpers.scalar?(data) && !normalized_selection.scalar?
+        write_scalar(values, target_dtype, normalized_selection) unless normalized_selection.size.zero?
+        return data
+      end
       raise HDF5::Error, 'Dataset shape must match data shape' unless values.shape == normalized_selection.result_shape
 
-      dtype_object = DType.for_numo(values)
-      target_dtype = dtype
-      raise ConversionError, "Cannot safely cast #{dtype_object.to_sym} to #{target_dtype.to_sym}" unless
-        dtype_object.castable_to?(target_dtype, casting:)
       return data if normalized_selection.size.zero?
 
-      buffer = HDF5::DataHelpers.buffer_for(values)
-      file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
-      raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
-
-      select_hyperslab(file_space_id, normalized_selection)
-      memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
-      raise HDF5::Error, 'Failed to create memory dataspace' if memory_space_id < 0
-      raise HDF5::Error, 'File and memory selections have different sizes' unless
-        HDF5::FFI.H5Sget_select_npoints(file_space_id) == HDF5::FFI.H5Sget_select_npoints(memory_space_id)
-
-      status = HDF5::FFI.H5Dwrite(@dataset_id, dtype_object.memory_type_id, memory_space_id, file_space_id,
-                                  HDF5::DEFAULT_PROPERTY_LIST, buffer)
-      raise HDF5::Error, 'Failed to write dataset' if status < 0
-
+      write_numeric_buffer(HDF5::DataHelpers.buffer_for(values), DType.for_numo(values), normalized_selection)
       data
-    ensure
-      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
-      HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
     end
 
     def close
@@ -351,7 +335,8 @@ module HDF5
       status = HDF5::FFI.H5Pget_fill_value(property_list_id, dtype_object.memory_type_id, buffer)
       raise HDF5::Error, 'Failed to get dataset fill value' if status < 0
 
-      dtype_object.numo_class.from_binary(buffer.read_bytes(dtype_object.itemsize), []).extract
+      value = HDF5::DataHelpers.from_binary(dtype_object, buffer.read_bytes(dtype_object.itemsize), []).extract
+      dtype_object.kind == :bool ? !value.zero? : value
     ensure
       HDF5::FFI.H5Pclose(property_list_id) if property_list_id && property_list_id >= 0
     end
@@ -381,7 +366,7 @@ module HDF5
 
     def append(data, axis: 0)
       ensure_open!
-      values = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data')
+      values = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data', dtype: dtype, convert: false)
       current_shape = shape
       raise HDF5::Error, 'Cannot append to a Null dataset' if current_shape.nil?
       raise HDF5::Error, 'Cannot append to a scalar dataset' if current_shape.empty?
@@ -421,6 +406,16 @@ module HDF5
       ensure_open!
       type_id = HDF5::FFI.H5Dget_type(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
+      current_shape = shape
+      if current_shape.nil?
+        raise HDF5::Error, 'Null datasets cannot be sliced' unless selection.nil?
+
+        current_dtype = dtype ? DType.for_symbol(dtype) : DType.for_hdf5(type_id)
+        unless DType.for_hdf5(type_id).castable_to?(current_dtype, casting:)
+          raise ConversionError, 'Cannot safely cast Null dataset dtype'
+        end
+        return HDF5::Empty.new(current_dtype)
+      end
       if dtype && HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
         raise ConversionError,
               'dtype is not supported for string datasets'
@@ -431,9 +426,6 @@ module HDF5
       current_dtype = dtype ? DType.for_symbol(dtype) : source_dtype
       raise ConversionError, "Cannot safely cast #{source_dtype.to_sym} to #{current_dtype.to_sym}" unless
         source_dtype.castable_to?(current_dtype, casting:)
-
-      current_shape = shape
-      return HDF5::Empty.new(current_dtype) if current_shape.nil?
 
       normalized_selection = Selection.normalize(selection, current_shape)
       return current_dtype.numo_class.zeros(*normalized_selection.result_shape) if normalized_selection.size.zero?
@@ -485,12 +477,16 @@ module HDF5
       ensure_open!
       raise HDF5::Error, 'read_into destination must be a Numo::NArray' unless destination.is_a?(Numo::NArray)
 
-      values = read(selection:, dtype: DType.for_numo(destination).to_sym, casting:)
-      unless destination.shape == values.shape
+      current_shape = shape
+      raise HDF5::Error, 'Cannot read a Null dataset into an array' if current_shape.nil?
+
+      expected_shape = Selection.normalize(selection, current_shape).result_shape
+      unless destination.shape == expected_shape
         raise HDF5::Error,
               'read_into destination shape must match selection shape'
       end
 
+      values = read(selection:, dtype: DType.for_numo(destination).to_sym, casting:)
       destination.store(values)
     end
 
@@ -500,10 +496,13 @@ module HDF5
       ensure_open!
       raise ArgumentError, 'max_bytes must be a positive integer' unless max_bytes.is_a?(Integer) && max_bytes.positive?
 
-      current_dtype = dtype
+      current_shape, current_dtype = HDF5::FFI::CALL_LOCK.synchronize { [shape, dtype] }
+      raise HDF5::Error, 'Cannot iterate over a Null dataset' if current_shape.nil?
+      if current_dtype.kind == :string
+        raise UnsupportedFeatureError, 'each_block cannot bound the byte size of variable-length strings'
+      end
       raise ArgumentError, 'max_bytes is smaller than one dataset element' if max_bytes < current_dtype.itemsize
 
-      current_shape = shape
       if current_shape.empty?
         yield [], read
         return
@@ -521,10 +520,9 @@ module HDF5
 
       ensure_open!
 
-      chunk_shape = chunks
+      current_shape, chunk_shape = HDF5::FFI::CALL_LOCK.synchronize { [shape, chunks] }
       raise HDF5::Error, 'each_chunk requires a chunked dataset' unless chunk_shape
 
-      current_shape = shape
       return if current_shape.any?(&:zero?)
 
       each_block_selection(current_shape, chunk_shape) do |selection|
@@ -534,25 +532,64 @@ module HDF5
 
     private
 
+    def write_numeric_buffer(buffer, dtype_object, normalized_selection)
+      file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
+
+      select_hyperslab(file_space_id, normalized_selection)
+      memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
+      raise HDF5::Error, 'Failed to create memory dataspace' if memory_space_id < 0
+      raise HDF5::Error, 'File and memory selections have different sizes' unless
+        HDF5::FFI.H5Sget_select_npoints(file_space_id) == HDF5::FFI.H5Sget_select_npoints(memory_space_id)
+
+      status = HDF5::FFI.H5Dwrite(@dataset_id, dtype_object.memory_type_id, memory_space_id, file_space_id,
+                                 HDF5::DEFAULT_PROPERTY_LIST, buffer)
+      raise HDF5::Error, 'Failed to write dataset' if status < 0
+    ensure
+      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
+      HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
+    end
+
+    def write_scalar(value, dtype_object, selection)
+      max_elements = [256 * 1024 / dtype_object.itemsize, selection.size].min
+      constant = dtype_object.numo_class.new(max_elements).fill(value.extract)
+      buffer = HDF5::DataHelpers.buffer_for(constant)
+      block_shape = block_shape_for(selection.result_shape, max_elements)
+      each_block_selection(selection.result_shape, block_shape) do |ranges|
+        write_numeric_buffer(buffer, dtype_object, selection.block(ranges))
+      end
+    end
+
     def write_string(data, selection:)
-      normalized_selection = Selection.normalize(selection, shape)
-      values, values_shape = HDF5::StringCodec.normalize_data(data)
+      current_shape = shape
+      raise HDF5::Error, 'Cannot write to a Null dataset' if current_shape.nil?
+
+      normalized_selection = Selection.normalize(selection, current_shape)
+      type_id = HDF5::FFI.H5Dget_type(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
+      unless HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+        raise ConversionError, 'Cannot write strings to a numeric dataset'
+      end
+      encoding = HDF5::StringCodec.encoding_for(type_id)
+      values, values_shape = HDF5::StringCodec.normalize_data(data, encoding:)
       unless values_shape == normalized_selection.result_shape
         raise HDF5::ShapeError,
               'Dataset shape must match string data shape'
       end
       return data if normalized_selection.size.zero?
 
-      type_id = HDF5::FFI.H5Dget_type(@dataset_id)
-      raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
       unless HDF5::StringCodec.variable?(type_id)
         raise UnsupportedTypeError, 'Fixed-length string datasets are not yet supported'
       end
 
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get string dataset dataspace' if file_space_id < 0
+
       select_hyperslab(file_space_id, normalized_selection)
       memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
-      buffer, _string_pointers = HDF5::StringCodec.buffer_for_values(values)
+      raise HDF5::Error, 'Failed to create string memory dataspace' if memory_space_id < 0
+
+      buffer, _string_pointers = HDF5::StringCodec.buffer_for_values(values, encoding:)
       status = HDF5::FFI.H5Dwrite(@dataset_id, type_id, memory_space_id, file_space_id,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write string dataset' if status < 0
@@ -572,25 +609,36 @@ module HDF5
       return Numo::RObject.new(*normalized_selection.result_shape) if normalized_selection.size.zero?
 
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get string dataset dataspace' if file_space_id < 0
+
       select_hyperslab(file_space_id, normalized_selection)
       memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
+      raise HDF5::Error, 'Failed to create string memory dataspace' if memory_space_id < 0
+
       buffer = ::FFI::MemoryPointer.new(:pointer, normalized_selection.size)
       status = HDF5::FFI.H5Dread(@dataset_id, type_id, memory_space_id, file_space_id,
                                  HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to read string dataset' if status < 0
 
-      HDF5::StringCodec.read_values(buffer, normalized_selection.size, normalized_selection.result_shape)
+      HDF5::StringCodec.read_values(buffer, normalized_selection.size, normalized_selection.result_shape,
+                                    encoding: HDF5::StringCodec.encoding_for(type_id))
     ensure
-      if buffer && type_id && memory_space_id
-        active_error = $ERROR_INFO
-        reclaim_status = HDF5::FFI.H5Dvlen_reclaim(type_id, memory_space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer)
-        if reclaim_status.negative? && active_error.nil?
-          raise HDF5::Error,
-                'Failed to reclaim variable-length string data'
+      begin
+        if buffer && type_id && memory_space_id
+          active_error = $ERROR_INFO
+          reclaim_status = HDF5::FFI.H5Dvlen_reclaim(type_id, memory_space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer)
+          if reclaim_status.negative? && active_error.nil?
+            raise HDF5::Error,
+                  'Failed to reclaim variable-length string data'
+          end
+        end
+      ensure
+        begin
+          HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
+        ensure
+          HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
         end
       end
-      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
-      HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
     end
 
     def block_shape_for(dataset_shape, max_elements)
@@ -653,7 +701,7 @@ module HDF5
 
     prepend FileContext.guard(
       :attrs, :write, :dtype, :shape, :chunks, :maxshape, :fillvalue, :resize, :append, :read, :read_array,
-      :[], :[]=, :read_into, :each_block, :each_chunk
+      :[], :[]=, :read_into, :close, :closed?
     )
   end
 end
