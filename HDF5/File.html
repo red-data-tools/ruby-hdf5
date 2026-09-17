@@ -510,7 +510,7 @@
   <span class='kw'>begin</span>
     <span class='kw'>yield</span> <span class='id identifier rubyid_file'>file</span>
   <span class='kw'>ensure</span>
-    <span class='id identifier rubyid_file'>file</span><span class='period'>.</span><span class='id identifier rubyid_close'>close</span>
+    <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_close_object'><span class='object_link'><a href="Native.html#close_object-class_method" title="HDF5::Native.close_object (method)">close_object</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_file'>file</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -556,7 +556,7 @@
   <span class='kw'>begin</span>
     <span class='kw'>yield</span> <span class='id identifier rubyid_file'>file</span>
   <span class='kw'>ensure</span>
-    <span class='id identifier rubyid_file'>file</span><span class='period'>.</span><span class='id identifier rubyid_close'>close</span>
+    <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_close_object'><span class='object_link'><a href="Native.html#close_object-class_method" title="HDF5::Native.close_object (method)">close_object</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_file'>file</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -594,19 +594,21 @@
 142
 143
 144
-145</pre>
+145
+146</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/file.rb', line 136</span>
 
 <span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ensure_open!'>ensure_open!</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_group?'>group?</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='kw'>case</span> <span class='id identifier rubyid_object_type'>object_type</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='symbol'>:H5O_TYPE_GROUP</span>
     <span class='const'><span class='object_link'><a href="Group.html" title="HDF5::Group (class)">Group</a></span></span><span class='period'>.</span><span class='id identifier rubyid_open'><span class='object_link'><a href="Group.html#open-class_method" title="HDF5::Group.open (method)">open</a></span></span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='ivar'>@context</span><span class='rparen'>)</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_dataset?'>dataset?</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='symbol'>:H5O_TYPE_DATASET</span>
     <span class='const'><span class='object_link'><a href="Dataset.html" title="HDF5::Dataset (class)">Dataset</a></span></span><span class='period'>.</span><span class='id identifier rubyid_open'><span class='object_link'><a href="Dataset.html#open-class_method" title="HDF5::Dataset.open (method)">open</a></span></span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='ivar'>@context</span><span class='rparen'>)</span>
   <span class='kw'>else</span>
-    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Group or dataset not found: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="UnsupportedTypeError.html" title="HDF5::UnsupportedTypeError (class)">UnsupportedTypeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Object is not a group or dataset: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -629,13 +631,13 @@
       <pre class="lines">
 
 
-147
 148
 149
-150</pre>
+150
+151</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/file.rb', line 147</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/file.rb', line 148</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_attrs'>attrs</span>
   <span class='id identifier rubyid_ensure_open!'>ensure_open!</span>
@@ -776,7 +778,7 @@
   <span class='kw'>begin</span>
     <span class='id identifier rubyid_block'>block</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_dataset'>dataset</span><span class='rparen'>)</span>
   <span class='kw'>ensure</span>
-    <span class='id identifier rubyid_dataset'>dataset</span><span class='period'>.</span><span class='id identifier rubyid_close'>close</span>
+    <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_close_object'><span class='object_link'><a href="Native.html#close_object-class_method" title="HDF5::Native.close_object (method)">close_object</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_dataset'>dataset</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -826,7 +828,7 @@
   <span class='kw'>begin</span>
     <span class='id identifier rubyid_block'>block</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_group'>group</span><span class='rparen'>)</span>
   <span class='kw'>ensure</span>
-    <span class='id identifier rubyid_group'>group</span><span class='period'>.</span><span class='id identifier rubyid_close'>close</span>
+    <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_close_object'><span class='object_link'><a href="Native.html#close_object-class_method" title="HDF5::Native.close_object (method)">close_object</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_group'>group</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -857,7 +859,7 @@
     <li>
       
       
-        <span class='type'>(<tt><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">HDF5::Error</a></span></tt>)</span>
+        <span class='type'>(<tt><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></tt>)</span>
       
       
       
@@ -885,7 +887,7 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_flush'>flush</span>
   <span class='id identifier rubyid_ensure_open!'>ensure_open!</span>
   <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Fflush</span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='symbol'>:H5F_SCOPE_GLOBAL</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to flush file</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>0</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to flush file</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>0</span>
 
   <span class='kw'>self</span>
 <span class='kw'>end</span></pre>
@@ -938,12 +940,12 @@
     <span class='int'>0</span> <span class='comment'># continue
 </span>  <span class='kw'>end</span>
 
-  <span class='kw'>case</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html#MiV-constant" title="HDF5::FFI::MiV (constant)">MiV</a></span></span>
-  <span class='kw'>when</span> <span class='int'>10</span>
-    <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Literate</span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='symbol'>:H5_INDEX_NAME</span><span class='comma'>,</span> <span class='symbol'>:H5_ITER_NATIVE</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_callback'>callback</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='kw'>else</span>
-    <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Literate2</span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='symbol'>:H5_INDEX_NAME</span><span class='comma'>,</span> <span class='symbol'>:H5_ITER_NATIVE</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_callback'>callback</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='kw'>end</span><span class='period'>.</span><span class='id identifier rubyid_negative?'>negative?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to iterate over file entries</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html#MiV-constant" title="HDF5::FFI::MiV (constant)">MiV</a></span></span> <span class='op'>==</span> <span class='int'>10</span>
+             <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Literate</span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='symbol'>:H5_INDEX_NAME</span><span class='comma'>,</span> <span class='symbol'>:H5_ITER_NATIVE</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_callback'>callback</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+           <span class='kw'>else</span>
+             <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Literate2</span><span class='lparen'>(</span><span class='ivar'>@file_id</span><span class='comma'>,</span> <span class='symbol'>:H5_INDEX_NAME</span><span class='comma'>,</span> <span class='symbol'>:H5_ITER_NATIVE</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='id identifier rubyid_callback'>callback</span><span class='comma'>,</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+           <span class='kw'>end</span>
+  <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_check'><span class='object_link'><a href="Native.html#check-class_method" title="HDF5::Native.check (method)">check</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to iterate over file entries</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_list'>list</span>
 <span class='kw'>end</span></pre>
@@ -957,7 +959,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 14:47:40 2026 by
+  Generated on Thu Sep 17 15:09:05 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>

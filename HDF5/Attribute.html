@@ -215,7 +215,7 @@
     <li>
       
       
-        <span class='type'>(<tt><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">HDF5::Error</a></span></tt>)</span>
+        <span class='type'>(<tt><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></tt>)</span>
       
       
       
@@ -235,7 +235,8 @@
 8
 9
 10
-11</pre>
+11
+12</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 5</span>
@@ -243,9 +244,10 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_dataset_id'>dataset_id</span><span class='comma'>,</span> <span class='id identifier rubyid_attr_name'>attr_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@dataset_id</span> <span class='op'>=</span> <span class='id identifier rubyid_dataset_id'>dataset_id</span>
   <span class='ivar'>@attr_name</span> <span class='op'>=</span> <span class='id identifier rubyid_attr_name'>attr_name</span>
+  <span class='ivar'>@context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span>
   <span class='id identifier rubyid_context'>context</span><span class='op'>&amp;.</span><span class='id identifier rubyid_ensure_open!'>ensure_open!</span><span class='lparen'>(</span><span class='id identifier rubyid_dataset_id'>dataset_id</span><span class='rparen'>)</span>
   <span class='ivar'>@attr_id</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aopen</span><span class='lparen'>(</span><span class='ivar'>@dataset_id</span><span class='comma'>,</span> <span class='ivar'>@attr_name</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../HDF5.html#DEFAULT_PROPERTY_LIST-constant" title="HDF5::DEFAULT_PROPERTY_LIST (constant)">DEFAULT_PROPERTY_LIST</a></span></span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to open attribute</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='ivar'>@attr_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to open attribute</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='ivar'>@attr_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -274,20 +276,20 @@
       <pre class="lines">
 
 
-41
-42
-43
 44
 45
-46</pre>
+46
+47
+48
+49</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 41</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 44</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_close'>close</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@attr_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
 
-  <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aclose</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_check'><span class='object_link'><a href="Native.html#check-class_method" title="HDF5::Native.check (method)">check</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aclose</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to close HDF5 attribute</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='ivar'>@attr_id</span> <span class='op'>=</span> <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -310,7 +312,6 @@
       <pre class="lines">
 
 
-13
 14
 15
 16
@@ -336,27 +337,33 @@
 36
 37
 38
-39</pre>
+39
+40
+41
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 13</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 14</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_read'>read</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="ClosedError.html" title="HDF5::ClosedError (class)">ClosedError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>HDF5 attribute is closed</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='ivar'>@attr_id</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+
+  <span class='ivar'>@context</span><span class='op'>&amp;.</span><span class='id identifier rubyid_ensure_open!'>ensure_open!</span><span class='lparen'>(</span><span class='ivar'>@dataset_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aget_type</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to get attribute datatype</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to get attribute datatype</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
 
   <span class='id identifier rubyid_space_id'>space_id</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aget_space</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to get attribute dataspace</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_space_id'>space_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
-  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Empty.html" title="HDF5::Empty (class)">Empty</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Empty.html#initialize-instance_method" title="HDF5::Empty#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="DType.html" title="HDF5::DType (class)">DType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_for_hdf5'><span class='object_link'><a href="DType.html#for_hdf5-class_method" title="HDF5::DType.for_hdf5 (method)">for_hdf5</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Sget_simple_extent_type</span><span class='lparen'>(</span><span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='symbol'>:H5S_NULL</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to get attribute dataspace</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_space_id'>space_id</span> <span class='op'>&lt;</span> <span class='int'>0</span>
+  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Empty.html" title="HDF5::Empty (class)">Empty</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Empty.html#initialize-instance_method" title="HDF5::Empty#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="DType.html" title="HDF5::DType (class)">DType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_for_hdf5'><span class='object_link'><a href="DType.html#for_hdf5-class_method" title="HDF5::DType.for_hdf5 (method)">for_hdf5</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_extent_type'><span class='object_link'><a href="Native.html#extent_type-class_method" title="HDF5::Native.extent_type (method)">extent_type</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='symbol'>:H5S_NULL</span>
 
-  <span class='kw'>return</span> <span class='id identifier rubyid_read_string'>read_string</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='comma'>,</span> <span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Tget_class</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='symbol'>:H5T_STRING</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_read_string'>read_string</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='comma'>,</span> <span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_datatype_class'><span class='object_link'><a href="Native.html#datatype_class-class_method" title="HDF5::Native.datatype_class (method)">datatype_class</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='symbol'>:H5T_STRING</span>
 
   <span class='id identifier rubyid_dtype_object'>dtype_object</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="DType.html" title="HDF5::DType (class)">DType</a></span></span><span class='period'>.</span><span class='id identifier rubyid_for_hdf5'><span class='object_link'><a href="DType.html#for_hdf5-class_method" title="HDF5::DType.for_hdf5 (method)">for_hdf5</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_attribute_shape'>attribute_shape</span> <span class='op'>=</span> <span class='id identifier rubyid_shape'>shape</span><span class='lparen'>(</span><span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_size'>size</span> <span class='op'>=</span> <span class='id identifier rubyid_attribute_shape'>attribute_shape</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='int'>1</span> <span class='op'>:</span> <span class='id identifier rubyid_attribute_shape'>attribute_shape</span><span class='period'>.</span><span class='id identifier rubyid_inject'>inject</span><span class='lparen'>(</span><span class='symbol'>:*</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_buffer'>buffer</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>FFI</span><span class='op'>::</span><span class='const'>MemoryPointer</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='symbol'>:char</span><span class='comma'>,</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>*</span> <span class='id identifier rubyid_dtype_object'>dtype_object</span><span class='period'>.</span><span class='id identifier rubyid_itemsize'>itemsize</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Aread</span><span class='lparen'>(</span><span class='ivar'>@attr_id</span><span class='comma'>,</span> <span class='id identifier rubyid_dtype_object'>dtype_object</span><span class='period'>.</span><span class='id identifier rubyid_memory_type_id'>memory_type_id</span><span class='comma'>,</span> <span class='id identifier rubyid_buffer'>buffer</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Error.html" title="HDF5::Error (class)">Error</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to read attribute</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>0</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="NativeError.html" title="HDF5::NativeError (class)">NativeError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Failed to read attribute</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span> <span class='op'>&lt;</span> <span class='int'>0</span>
 
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="DataHelpers.html" title="HDF5::DataHelpers (module)">DataHelpers</a></span></span><span class='period'>.</span><span class='id identifier rubyid_from_binary'><span class='object_link'><a href="DataHelpers.html#from_binary-class_method" title="HDF5::DataHelpers.from_binary (method)">from_binary</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_dtype_object'>dtype_object</span><span class='comma'>,</span> <span class='id identifier rubyid_buffer'>buffer</span><span class='period'>.</span><span class='id identifier rubyid_read_bytes'>read_bytes</span><span class='lparen'>(</span><span class='id identifier rubyid_size'>size</span> <span class='op'>*</span> <span class='id identifier rubyid_dtype_object'>dtype_object</span><span class='period'>.</span><span class='id identifier rubyid_itemsize'>itemsize</span><span class='rparen'>)</span><span class='comma'>,</span>
                                          <span class='id identifier rubyid_attribute_shape'>attribute_shape</span><span class='rparen'>)</span>
@@ -365,8 +372,7 @@
   <span class='id identifier rubyid_scalar'>scalar</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_extract'>extract</span>
   <span class='id identifier rubyid_dtype_object'>dtype_object</span><span class='period'>.</span><span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:bool</span> <span class='op'>?</span> <span class='op'>!</span><span class='id identifier rubyid_scalar'>scalar</span><span class='period'>.</span><span class='id identifier rubyid_zero?'>zero?</span> <span class='op'>:</span> <span class='id identifier rubyid_scalar'>scalar</span>
 <span class='kw'>ensure</span>
-  <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Tclose</span><span class='lparen'>(</span><span class='id identifier rubyid_type_id'>type_id</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_type_id'>type_id</span> <span class='op'>&gt;=</span> <span class='int'>0</span>
-  <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='period'>.</span><span class='const'>H5Sclose</span><span class='lparen'>(</span><span class='id identifier rubyid_space_id'>space_id</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_space_id'>space_id</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_space_id'>space_id</span> <span class='op'>&gt;=</span> <span class='int'>0</span>
+  <span class='const'><span class='object_link'><a href="Native.html" title="HDF5::Native (module)">Native</a></span></span><span class='period'>.</span><span class='id identifier rubyid_close'><span class='object_link'><a href="Native.html#close-class_method" title="HDF5::Native.close (method)">close</a></span></span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='symbol'>:H5Tclose</span><span class='comma'>,</span> <span class='id identifier rubyid_type_id'>type_id</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='symbol'>:H5Sclose</span><span class='comma'>,</span> <span class='id identifier rubyid_space_id'>space_id</span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -378,7 +384,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 14:47:42 2026 by
+  Generated on Thu Sep 17 15:09:06 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
