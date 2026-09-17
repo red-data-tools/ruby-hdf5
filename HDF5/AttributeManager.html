@@ -881,7 +881,10 @@
 229
 230
 231
-232</pre>
+232
+233
+234
+235</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/attribute.rb', line 187</span>
@@ -889,6 +892,9 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_attr_name'>attr_name</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='ivar'>@context</span><span class='op'>&amp;.</span><span class='id identifier rubyid_ensure_open!'>ensure_open!</span><span class='lparen'>(</span><span class='ivar'>@dataset_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_empty_data'>empty_data</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Empty.html" title="HDF5::Empty (class)">Empty</a></span></span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_empty_data'>empty_data</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_dtype'>dtype</span><span class='period'>.</span><span class='id identifier rubyid_kind'>kind</span> <span class='op'>==</span> <span class='symbol'>:string</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="UnsupportedFeatureError.html" title="HDF5::UnsupportedFeatureError (class)">UnsupportedFeatureError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Creating Null string attributes is not yet supported</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
   <span class='id identifier rubyid_string_data'>string_data</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StringCodec.html" title="HDF5::StringCodec (module)">StringCodec</a></span></span><span class='period'>.</span><span class='id identifier rubyid_string_data?'><span class='object_link'><a href="StringCodec.html#string_data%3F-class_method" title="HDF5::StringCodec.string_data? (method)">string_data?</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_string_values'>string_values</span><span class='comma'>,</span> <span class='id identifier rubyid_string_shape'>string_shape</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StringCodec.html" title="HDF5::StringCodec (module)">StringCodec</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize_data'><span class='object_link'><a href="StringCodec.html#normalize_data-class_method" title="HDF5::StringCodec.normalize_data (method)">normalize_data</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_string_data'>string_data</span>
   <span class='id identifier rubyid_values'>values</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../HDF5.html" title="HDF5 (module)">HDF5</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="DataHelpers.html" title="HDF5::DataHelpers (module)">DataHelpers</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize_data'><span class='object_link'><a href="DataHelpers.html#normalize_data-class_method" title="HDF5::DataHelpers.normalize_data (method)">normalize_data</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='comma'>,</span> <span class='label'>label:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Attribute data</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_string_data'>string_data</span> <span class='op'>||</span> <span class='id identifier rubyid_empty_data'>empty_data</span>
@@ -942,7 +948,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 09:05:53 2026 by
+  Generated on Thu Sep 17 09:17:15 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
