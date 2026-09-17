@@ -187,6 +187,9 @@ module HDF5
     def write(attr_name, value)
       @context&.ensure_open!(@dataset_id)
       empty_data = value.is_a?(HDF5::Empty)
+      if empty_data && value.dtype.kind == :string
+        raise UnsupportedFeatureError, 'Creating Null string attributes is not yet supported'
+      end
       string_data = HDF5::StringCodec.string_data?(value)
       string_values, string_shape = HDF5::StringCodec.normalize_data(value) if string_data
       values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data') unless string_data || empty_data

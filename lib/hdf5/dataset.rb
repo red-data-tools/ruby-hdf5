@@ -6,6 +6,12 @@ module HDF5
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
 
         empty_data = data.is_a?(HDF5::Empty)
+        if empty_data
+          raise ShapeError, 'Null datasets cannot have a shape' unless shape.nil?
+          if data.dtype.kind == :string
+            raise UnsupportedFeatureError, 'Creating Null string datasets is not yet supported'
+          end
+        end
         string_data = HDF5::StringCodec.string_data?(data)
         _string_values, string_shape = HDF5::StringCodec.normalize_data(data) if string_data
         unless data.nil? || string_data || empty_data
@@ -328,6 +334,9 @@ module HDF5
     def fillvalue
       ensure_open!
       dtype_object = dtype
+      if dtype_object.kind == :string
+        raise UnsupportedFeatureError, 'fillvalue is not supported for string datasets'
+      end
       property_list_id = HDF5::FFI.H5Dget_create_plist(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset creation properties' if property_list_id < 0
 
@@ -429,6 +438,9 @@ module HDF5
 
       normalized_selection = Selection.normalize(selection, current_shape)
       return current_dtype.numo_class.zeros(*normalized_selection.result_shape) if normalized_selection.size.zero?
+      if current_dtype.kind == :complex && source_dtype.kind != :complex
+        raise ConversionError, 'Reading non-complex data as complex requires an explicit Numo cast'
+      end
 
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
@@ -487,6 +499,7 @@ module HDF5
       end
 
       values = read(selection:, dtype: DType.for_numo(destination).to_sym, casting:)
+      values = values ? 1 : 0 if expected_shape.empty? && destination.is_a?(Numo::Bit)
       destination.store(values)
     end
 

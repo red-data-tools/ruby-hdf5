@@ -140,6 +140,38 @@ class ReviewRegressionTest < Test::Unit::TestCase
       replace_ffi_method(:H5Dread, ->(*) { flunk('I/O must not run for a mismatched destination') }) do
         assert_raise(HDF5::Error) { scalar.read_into(Numo::Int16.zeros(1)) }
       end
+
+      bits = file.create_dataset('bits', [true, false])
+      bit_destination = Numo::Bit.zeros
+      [1, 0].each_with_index do |value, index|
+        assert_same(bit_destination, bits.read_into(bit_destination, selection: [index]))
+        assert_equal(value, bit_destination.extract)
+        bit_scalar = file.create_dataset("bit_scalar_#{index}", value == 1)
+        assert_same(bit_destination, bit_scalar.read_into(bit_destination))
+        assert_equal(value, bit_destination.extract)
+      end
+      bit_array = Numo::Bit.zeros(2)
+      assert_same(bit_array, bits.read_into(bit_array))
+      assert_equal([1, 0], bit_array.to_a)
+    end
+  end
+
+  test 'real to complex reads require an explicit cast without performing I/O' do
+    with_file do |file|
+      [Numo::Int16[1, 2], Numo::SFloat[1.5, 2.5]].each_with_index do |values, index|
+        dataset = file.create_dataset("real_#{index}", values)
+        assert_equal(values, dataset.read)
+        assert_equal(Numo::DComplex.cast(values), Numo::DComplex.cast(dataset.read))
+        destination = Numo::DComplex.zeros(2)
+        replace_ffi_method(:H5Dread, ->(*) { flunk('Unsupported conversion must not perform I/O') }) do
+          %i[safe unsafe].each do |casting|
+            assert_raise(HDF5::ConversionError) { dataset.read(dtype: :complex128, casting:) }
+            assert_raise(HDF5::ConversionError) { dataset.read_into(destination, casting:) }
+          end
+        end
+        assert_equal([Complex(0, 0), Complex(0, 0)], destination.to_a)
+        assert_equal([0], dataset.read(selection: [0...0], dtype: :complex128).shape)
+      end
     end
   end
 
@@ -159,6 +191,29 @@ class ReviewRegressionTest < Test::Unit::TestCase
       assert_kind_of(HDF5::Empty, attribute)
       assert_equal(:int16, attribute.dtype.to_sym)
       assert_raise(HDF5::ShapeError) { dataset.attrs.modify('null', 0) }
+      [[], [2]].each_with_index do |invalid_shape, index|
+        name = "invalid_null_#{index}"
+        assert_raise(HDF5::ShapeError) do
+          file.create_dataset(name, HDF5::Empty.new(:int16), shape: invalid_shape)
+        end
+        assert_false(file.key?(name))
+      end
+      dataset.attrs['null_copy'] = attribute
+      assert_kind_of(HDF5::Empty, dataset.attrs['null_copy'])
+    end
+  end
+
+  test 'unsupported string operations preserve existing data' do
+    with_file do |file|
+      dataset = file.create_dataset('text', 'hello')
+      empty_string = HDF5::Empty.new(dataset.dtype)
+      assert_raise(HDF5::UnsupportedFeatureError) { file.create_dataset('null_copy', empty_string) }
+      assert_false(file.key?('null_copy'))
+      dataset.attrs['text'] = 'preserved'
+      assert_raise(HDF5::UnsupportedFeatureError) { dataset.attrs['text'] = empty_string }
+      assert_equal('preserved', dataset.attrs['text'])
+      assert_raise(HDF5::UnsupportedFeatureError) { dataset.fillvalue }
+      assert_equal('hello', dataset.read)
     end
   end
 
