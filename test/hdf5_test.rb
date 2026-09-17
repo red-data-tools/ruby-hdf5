@@ -92,6 +92,55 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'reads a multidimensional selection' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'selection.h5')
+      matrix = Numo::Int16[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+      HDF5::File.create(path) { |file| file.create_dataset('matrix', matrix) }
+
+      HDF5::File.open(path) do |file|
+        dataset = file['matrix']
+        assert_equal(Numo::Int16[[4, 5, 6], [7, 8, 9]], dataset.read(selection: [1.., true]))
+        assert_equal(Numo::Int16[2, 5, 8], dataset.read(selection: [true, 1]))
+        assert_equal(Numo::Int16[[1, 2, 3], [7, 8, 9]], dataset.read(selection: [HDF5.slice(0..2, step: 2), true]))
+        assert_equal(5, dataset.read(selection: [1, 1]))
+      end
+    end
+  end
+
+  test 'writes a multidimensional selection without changing other values' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'selection-write.h5')
+      matrix = Numo::Int16[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('matrix', matrix)
+        dataset[1.., true] = Numo::Int16[[10, 11, 12], [13, 14, 15]]
+        dataset[0, 0] = 20
+        dataset.write(-1, selection: [0, 1..])
+        assert_equal(Numo::Int16[[20, -1, -1], [10, 11, 12], [13, 14, 15]], dataset.read)
+        assert_equal(11, dataset[1, 1])
+      end
+    end
+  end
+
+  test 'reads a selection into an existing Numo array' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'read-into.h5')
+      matrix = Numo::Int16[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+      HDF5::File.create(path) { |file| file.create_dataset('matrix', matrix) }
+
+      HDF5::File.open(path) do |file|
+        destination = Numo::Int16.zeros(2, 3)
+        assert_same(destination, file['matrix'].read_into(destination, selection: [1.., true]))
+        assert_equal(Numo::Int16[[4, 5, 6], [7, 8, 9]], destination)
+        assert_raise(HDF5::Error) { file['matrix'].read_into(Numo::Int16.zeros(3)) }
+      end
+    end
+  end
+
   test 'preserves int64 values on create' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'int64-create.h5')

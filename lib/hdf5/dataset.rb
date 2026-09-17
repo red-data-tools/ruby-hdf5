@@ -93,17 +93,36 @@ module HDF5
       @attrs ||= AttributeManager.new(@dataset_id)
     end
 
-    def write(data)
-      values = DataHelpers.normalize_data(data)
-      raise HDF5::Error, 'Dataset shape must match data shape' unless values.shape == shape
+    def write(data, selection: nil)
+      normalized_selection = Selection.normalize(selection, shape)
+      values = if data.is_a?(Numeric)
+                 target_dtype = dtype
+                 normalized_selection.scalar? ? target_dtype.numo_class.cast(data) :
+                   target_dtype.numo_class.ones(*normalized_selection.result_shape) * data
+               else
+                 DataHelpers.normalize_data(data)
+               end
+      raise HDF5::Error, 'Dataset shape must match data shape' unless values.shape == normalized_selection.result_shape
 
       dtype_object = DType.for_numo(values)
       buffer = DataHelpers.buffer_for(values)
-      status = HDF5::FFI.H5Dwrite(@dataset_id, dtype_object.memory_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
+      file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
+
+      select_hyperslab(file_space_id, normalized_selection)
+      memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
+      raise HDF5::Error, 'Failed to create memory dataspace' if memory_space_id < 0
+      raise HDF5::Error, 'File and memory selections have different sizes' unless
+        HDF5::FFI.H5Sget_select_npoints(file_space_id) == HDF5::FFI.H5Sget_select_npoints(memory_space_id)
+
+      status = HDF5::FFI.H5Dwrite(@dataset_id, dtype_object.memory_type_id, memory_space_id, file_space_id,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write dataset' if status < 0
 
       data
+    ensure
+      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
+      HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
     end
 
     def close
@@ -137,23 +156,74 @@ module HDF5
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
     end
 
-    def read
+    def read(selection: nil)
       current_dtype = dtype
       current_shape = shape
-      total_elements = current_shape.empty? ? 1 : current_shape.inject(:*)
-      return current_dtype.numo_class.zeros(*current_shape) if total_elements.zero?
+      normalized_selection = Selection.normalize(selection, current_shape)
+      return current_dtype.numo_class.zeros(*normalized_selection.result_shape) if normalized_selection.size.zero?
 
-      bytesize = total_elements * current_dtype.itemsize
+      file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
+
+      select_hyperslab(file_space_id, normalized_selection)
+      memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
+      raise HDF5::Error, 'Failed to create memory dataspace' if memory_space_id < 0
+      raise HDF5::Error, 'File and memory selections have different sizes' unless
+        HDF5::FFI.H5Sget_select_npoints(file_space_id) == HDF5::FFI.H5Sget_select_npoints(memory_space_id)
+
+      bytesize = normalized_selection.size * current_dtype.itemsize
       buffer = ::FFI::MemoryPointer.new(:char, bytesize)
-      status = HDF5::FFI.H5Dread(@dataset_id, current_dtype.memory_type_id, HDF5::DEFAULT_PROPERTY_LIST,
-                                 HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST, buffer)
+      status = HDF5::FFI.H5Dread(@dataset_id, current_dtype.memory_type_id, memory_space_id, file_space_id,
+                                 HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to read dataset' if status < 0
 
-      result = current_dtype.numo_class.from_binary(buffer.read_bytes(bytesize), current_shape)
-      current_shape.empty? ? result.extract : result
+      result = current_dtype.numo_class.from_binary(buffer.read_bytes(bytesize), normalized_selection.result_shape)
+      normalized_selection.scalar? ? result.extract : result
+    ensure
+      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
+      HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
+    end
+
+    def [](*selection)
+      read(selection: selection)
+    end
+
+    def []=(*selection, value)
+      write(value, selection: selection)
+    end
+
+    def read_into(destination, selection: nil)
+      raise HDF5::Error, 'read_into destination must be a Numo::NArray' unless destination.is_a?(Numo::NArray)
+
+      values = read(selection: selection)
+      raise HDF5::Error, 'read_into destination shape must match selection shape' unless destination.shape == values.shape
+
+      destination.store(values)
     end
 
     private
+
+    def create_memory_dataspace(shape)
+      return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
+
+      dims = ::FFI::MemoryPointer.new(:ulong_long, shape.length)
+      dims.write_array_of_ulong_long(shape)
+      HDF5::FFI.H5Screate_simple(shape.length, dims, nil)
+    end
+
+    def select_hyperslab(dataspace_id, selection)
+      rank = selection.start.length
+      return if rank.zero?
+
+      start = ::FFI::MemoryPointer.new(:ulong_long, rank)
+      stride = ::FFI::MemoryPointer.new(:ulong_long, rank)
+      count = ::FFI::MemoryPointer.new(:ulong_long, rank)
+      start.write_array_of_ulong_long(selection.start)
+      stride.write_array_of_ulong_long(selection.stride)
+      count.write_array_of_ulong_long(selection.count)
+      status = HDF5::FFI.H5Sselect_hyperslab(dataspace_id, :H5S_SELECT_SET, start, stride, count, nil)
+      raise HDF5::Error, 'Failed to select dataset region' if status < 0
+    end
 
     def initialize_from_id(dataset_id, name)
       raise HDF5::Error, "Failed to open dataset: #{name}" if dataset_id < 0

@@ -6,10 +6,18 @@ require_relative 'hdf5/version'
 
 module HDF5
   class Error < StandardError; end
+  Slice = Struct.new(:range, :step, keyword_init: true)
   DEFAULT_PROPERTY_LIST = 0
 
   class << self
     attr_accessor :lib_path
+
+    def slice(range, step:)
+      raise ArgumentError, 'slice step must be a positive integer' unless step.is_a?(Integer) && step.positive?
+      raise ArgumentError, 'slice range must be a Range' unless range.is_a?(Range)
+
+      Slice.new(range:, step:)
+    end
 
     def search_hdf5lib
       name = "libhdf5.#{FFI::Platform::LIBSUFFIX}"
@@ -39,6 +47,7 @@ end
 require_relative 'hdf5/ffi'
 
 require_relative 'hdf5/dtype'
+require_relative 'hdf5/selection'
 require_relative 'hdf5/file'
 require_relative 'hdf5/group'
 require_relative 'hdf5/dataset'
