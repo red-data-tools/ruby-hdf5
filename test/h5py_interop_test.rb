@@ -24,8 +24,13 @@ class H5pyInteropTest < Test::Unit::TestCase
             file.create_dataset("empty", shape=(0, 3), dtype="<i8")
             file.create_dataset("bits", data=np.array([[False, True], [True, False]], dtype=np.bool_))
             file.create_dataset("complex", data=np.array([1+2j, 3+4j], dtype="<c8"))
+            file.create_dataset("big_complex", data=np.array([1+2j, 3+4j], dtype=">c16"))
+            file.create_dataset("ascii", data="hello", dtype=h5py.string_dtype("ascii"))
+            file.create_dataset("null", data=h5py.Empty("i2"))
+            file.create_dataset("null_text", data=h5py.Empty(h5py.string_dtype("utf-8")))
             file["external"] = h5py.ExternalLink("other.h5", "/data")
             file["matrix"].attrs["scale"] = np.int64(2**40)
+            file["matrix"].attrs["missing"] = h5py.Empty("i2")
       PYTHON
 
       HDF5::File.open(path) do |file|
@@ -38,7 +43,50 @@ class H5pyInteropTest < Test::Unit::TestCase
         assert_equal(1 << 40, matrix.attrs['scale'])
         assert_equal(Numo::Bit[[0, 1], [1, 0]], file['bits'].read)
         assert_equal(Numo::SComplex[Complex(1, 2), Complex(3, 4)], file['complex'].read)
+        assert_equal(:big, file['big_complex'].dtype.byteorder)
+        assert_equal(Numo::DComplex[Complex(1, 2), Complex(3, 4)], file['big_complex'].read)
+        assert_equal('hello', file['ascii'].read)
+        assert_equal(Encoding::US_ASCII, file['ascii'].dtype.encoding)
+        assert_kind_of(HDF5::Empty, file['null'].read)
+        assert_kind_of(HDF5::Empty, file['null_text'].read)
+        assert_equal(:string, file['null_text'].read.dtype.to_sym)
+        assert_kind_of(HDF5::Empty, matrix.attrs['missing'])
+        assert_equal(:int16, matrix.attrs['missing'].dtype.to_sym)
         assert_equal({ type: :external, filename: 'other.h5', path: '/data' }, file.link_info('external'))
+      end
+    end
+  end
+
+  test 'reads both byte orders across supported integer float and complex types' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'byteorders.h5')
+      run_python(<<~PYTHON, path)
+        import h5py
+        import numpy as np
+        import sys
+
+        names = ("int8", "uint8", "int16", "uint16", "int32", "uint32",
+                 "int64", "uint64", "float32", "float64", "complex64", "complex128")
+        with h5py.File(sys.argv[1], "w") as file:
+            for name in names:
+                values = [1+2j, 3+4j] if name.startswith("complex") else [1, 2]
+                for prefix, order in (("little", "<"), ("big", ">")):
+                    dtype = np.dtype(name).newbyteorder(order)
+                    file.create_dataset(name + "_" + prefix, data=np.array(values, dtype=dtype))
+      PYTHON
+
+      HDF5::File.open(path) do |file|
+        HDF5::DType::TYPES.each do |name, (numo_class, _, _, kind, itemsize)|
+          next if kind == :bool
+
+          values = kind == :complex ? [Complex(1, 2), Complex(3, 4)] : [1, 2]
+          %i[little big].each do |order|
+            dataset = file["#{name}_#{order}"]
+            assert_equal(name, dataset.dtype.to_sym)
+            assert_equal(order, dataset.dtype.byteorder) if itemsize > 1
+            assert_equal(numo_class.cast(values), dataset.read)
+          end
+        end
       end
     end
   end
