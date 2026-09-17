@@ -1,5 +1,7 @@
 module HDF5
   class Group
+    include Hierarchy
+
     class << self
       def create(parent_id, name)
         group = from_id(
@@ -90,6 +92,10 @@ module HDF5
     end
 
     private
+
+    def hdf5_id
+      @group_id
+    end
 
     def initialize_from_id(group_id, name)
       raise HDF5::Error, "Failed to open group: #{name}" if group_id < 0

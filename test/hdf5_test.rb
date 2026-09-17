@@ -347,4 +347,37 @@ class HDF5Test < Test::Unit::TestCase
       HDF5::File.open('/tmp/does-not-exist-ruby-hdf5.h5')
     end
   end
+
+  test 'supports standard file modes without truncating append mode' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'modes.h5')
+
+      HDF5::File.open(path, 'w') { |file| file.create_dataset('original', [1]) }
+      HDF5::File.open(path, 'a') { |file| file.create_dataset('appended', [2]) }
+      HDF5::File.open(path, 'r') do |file|
+        assert_equal(Numo::Int64[1], file['original'].read)
+        assert_equal(Numo::Int64[2], file['appended'].read)
+      end
+      assert_raise(HDF5::Error) { HDF5::File.open(path, 'x') }
+      assert_raise(ArgumentError) { HDF5::File.open(path, 'invalid') }
+    end
+  end
+
+  test 'manages links through common file and group operations' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'links.h5')
+
+      HDF5::File.create(path) do |file|
+        group = file.create_group('parent')
+        group.create_dataset('original', [1])
+        assert_equal(['original'], group.keys)
+        assert_true(group.key?('original'))
+        group.move('original', 'renamed')
+        assert_false(group.key?('original'))
+        assert_equal(Numo::Int64[1], group['renamed'].read)
+        group.delete('renamed')
+        assert_false(group.key?('renamed'))
+      end
+    end
+  end
 end

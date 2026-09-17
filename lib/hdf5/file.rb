@@ -1,8 +1,11 @@
 module HDF5
   class File
+    include Hierarchy
+
     H5F_ACC_RDONLY = 0x0000
     H5F_ACC_RDWR = 0x0001
     H5F_ACC_TRUNC = 0x0002
+    H5F_ACC_EXCL = 0x0004
 
     class << self
       def create(filename, flags = H5F_ACC_TRUNC)
@@ -17,8 +20,9 @@ module HDF5
         end
       end
 
-      def open(filename, mode = H5F_ACC_RDONLY)
-        file = from_id(HDF5::FFI.H5Fopen(filename, mode, HDF5::DEFAULT_PROPERTY_LIST), filename, mode)
+      def open(filename, mode = 'r')
+        file_id, flags = open_file(filename, mode)
+        file = from_id(file_id, filename, flags)
         return file unless block_given?
 
         begin
@@ -29,6 +33,27 @@ module HDF5
       end
 
       private
+
+      def open_file(filename, mode)
+        return [HDF5::FFI.H5Fopen(filename, mode, HDF5::DEFAULT_PROPERTY_LIST), mode] if mode.is_a?(Integer)
+
+        case mode
+        when 'r'
+          [HDF5::FFI.H5Fopen(filename, H5F_ACC_RDONLY, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_RDONLY]
+        when 'r+'
+          [HDF5::FFI.H5Fopen(filename, H5F_ACC_RDWR, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_RDWR]
+        when 'w'
+          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_TRUNC, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_TRUNC]
+        when 'x'
+          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_EXCL, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_EXCL]
+        when 'a'
+          file_id = HDF5::FFI.H5Fcreate(filename, H5F_ACC_EXCL, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST)
+          file_id = HDF5::FFI.H5Fopen(filename, H5F_ACC_RDWR, HDF5::DEFAULT_PROPERTY_LIST) if file_id < 0
+          [file_id, H5F_ACC_RDWR]
+        else
+          raise ArgumentError, "Unsupported file mode: #{mode.inspect}"
+        end
+      end
 
       def from_id(file_id, filename, mode)
         file = allocate
@@ -88,6 +113,10 @@ module HDF5
     end
 
     private
+
+    def hdf5_id
+      @file_id
+    end
 
     def initialize_from_id(file_id, filename, mode)
       raise HDF5::Error, "Failed to open file: #{filename}" if file_id < 0
