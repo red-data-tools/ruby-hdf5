@@ -163,6 +163,37 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'creates a chunked gzip dataset' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'chunked.h5')
+      matrix = Numo::Int16[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('matrix', matrix, chunks: [2, 3], compression: :gzip, compression_opts: 1,
+                                      shuffle: true, fletcher32: true)
+        assert_equal([2, 3], dataset.chunks)
+        assert_equal(matrix, dataset.read)
+      end
+    end
+  end
+
+  test 'resizes and appends to an extendible dataset' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'extendible.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('matrix', shape: [0, 2], dtype: :int16, maxshape: [nil, 2], chunks: [2, 2])
+        assert_equal([nil, 2], dataset.maxshape)
+        assert_equal([2, 2], dataset.chunks)
+        assert_same(dataset, dataset.append(Numo::Int16[[1, 2], [3, 4]]))
+        dataset.append(Numo::Int16[[5, 6]])
+        assert_equal([3, 2], dataset.shape)
+        assert_equal(Numo::Int16[[1, 2], [3, 4], [5, 6]], dataset.read)
+        assert_raise(HDF5::Error) { dataset.resize([4, 3]) }
+      end
+    end
+  end
+
   test 'preserves int64 values on create' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'int64-create.h5')

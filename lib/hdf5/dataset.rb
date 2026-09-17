@@ -31,19 +31,23 @@ module HDF5
     private_constant :DataHelpers
 
     class << self
-      def create(parent_id, name, data = nil, shape: nil, dtype: nil)
+      def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
+                 compression_opts: nil, shuffle: false, fletcher32: false)
         narray = DataHelpers.normalize_data(data) unless data.nil?
         dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)
         shape ||= narray.shape
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
         raise HDF5::Error, 'Dataset shape must match data shape' if narray && shape != narray.shape
 
-        dataspace_id = create_dataspace(shape)
+        validate_maxshape(maxshape, shape) if maxshape
+        chunks = :auto if maxshape && chunks.nil?
+        dataspace_id = create_dataspace(shape, maxshape)
         raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
+        dcpl_id = create_property_list(shape, chunks:, compression:, compression_opts:, shuffle:, fletcher32:)
 
         dataset = from_id(
           HDF5::FFI.H5Dcreate2(parent_id, name, dtype_object.storage_type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
-                               HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
+                               dcpl_id || HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
         )
         dataset.write(narray) if narray
         return dataset unless block_given?
@@ -54,6 +58,7 @@ module HDF5
           dataset.close
         end
       ensure
+        HDF5::FFI.H5Pclose(dcpl_id) if dcpl_id && dcpl_id >= 0
         HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
       end
 
@@ -70,12 +75,67 @@ module HDF5
 
       private
 
-      def create_dataspace(shape)
+      def create_dataspace(shape, maxshape = nil)
         return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
 
         dims = ::FFI::MemoryPointer.new(:ulong_long, shape.length)
         dims.write_array_of_ulong_long(shape)
-        HDF5::FFI.H5Screate_simple(shape.length, dims, nil)
+        maxdims = if maxshape
+                    ::FFI::MemoryPointer.new(:ulong_long, maxshape.length).tap do |pointer|
+                      pointer.write_array_of_ulong_long(maxshape.map { |dimension| dimension.nil? ? unlimited_dimension : dimension })
+                    end
+                  end
+        HDF5::FFI.H5Screate_simple(shape.length, dims, maxdims)
+      end
+
+      def validate_maxshape(maxshape, shape)
+        raise HDF5::Error, 'maxshape must be an Array matching dataset rank' unless maxshape.is_a?(Array) && maxshape.length == shape.length
+        valid = maxshape.zip(shape).all? { |maximum, dimension| maximum.nil? || maximum.is_a?(Integer) && maximum >= dimension }
+        raise HDF5::Error, 'maxshape dimensions must be nil or integers no smaller than shape' unless valid
+      end
+
+      def unlimited_dimension
+        (1 << (::FFI.type_size(:ulong_long) * 8)) - 1
+      end
+
+      def create_property_list(shape, chunks:, compression:, compression_opts:, shuffle:, fletcher32:)
+        return unless chunks || compression || compression_opts || shuffle || fletcher32
+        raise HDF5::Error, 'Chunked storage is not supported for scalar datasets' if shape.empty?
+        raise HDF5::Error, 'Unsupported compression' unless compression.nil? || compression == :gzip
+        raise HDF5::Error, 'compression_opts requires compression: :gzip' if compression_opts && compression != :gzip
+
+        chunk_shape = chunks == :auto || chunks.nil? ? auto_chunk_shape(shape) : validate_chunk_shape(chunks, shape)
+        compression_level = compression_opts || 4
+        raise HDF5::Error, 'gzip compression_opts must be between 0 and 9' unless compression.nil? || compression_level.between?(0, 9)
+
+        dcpl_id = HDF5::FFI.H5Pcreate(HDF5::FFI.H5P_CLS_DATASET_CREATE_ID_g)
+        raise HDF5::Error, 'Failed to create dataset property list' if dcpl_id < 0
+
+        dims = ::FFI::MemoryPointer.new(:ulong_long, chunk_shape.length)
+        dims.write_array_of_ulong_long(chunk_shape)
+        check_property_status(HDF5::FFI.H5Pset_chunk(dcpl_id, chunk_shape.length, dims), 'set chunk dimensions')
+        check_property_status(HDF5::FFI.H5Pset_shuffle(dcpl_id), 'enable shuffle') if shuffle
+        check_property_status(HDF5::FFI.H5Pset_deflate(dcpl_id, compression_level), 'enable gzip') if compression == :gzip
+        check_property_status(HDF5::FFI.H5Pset_fletcher32(dcpl_id), 'enable Fletcher32') if fletcher32
+        dcpl_id
+      rescue StandardError
+        HDF5::FFI.H5Pclose(dcpl_id) if dcpl_id && dcpl_id >= 0
+        raise
+      end
+
+      def auto_chunk_shape(shape)
+        shape.map { |dimension| [dimension, 1].max }
+      end
+
+      def validate_chunk_shape(chunks, shape)
+        raise HDF5::Error, 'chunks must be an Array matching dataset rank' unless chunks.is_a?(Array) && chunks.length == shape.length
+        raise HDF5::Error, 'chunk dimensions must be positive integers' unless chunks.all? { |dimension| dimension.is_a?(Integer) && dimension.positive? }
+
+        chunks
+      end
+
+      def check_property_status(status, operation)
+        raise HDF5::Error, "Failed to #{operation}" if status < 0
       end
 
       def from_id(dataset_id, name)
@@ -154,6 +214,72 @@ module HDF5
       dims.read_array_of_uint64(ndims)
     ensure
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+    end
+
+    def chunks
+      property_list_id = HDF5::FFI.H5Dget_create_plist(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset creation properties' if property_list_id < 0
+      return nil unless HDF5::FFI.H5Pget_layout(property_list_id) == :H5D_CHUNKED
+
+      dimensions = ::FFI::MemoryPointer.new(:ulong_long, shape.length)
+      rank = HDF5::FFI.H5Pget_chunk(property_list_id, shape.length, dimensions)
+      raise HDF5::Error, 'Failed to get chunk dimensions' if rank < 0
+
+      dimensions.read_array_of_uint64(rank)
+    ensure
+      HDF5::FFI.H5Pclose(property_list_id) if property_list_id && property_list_id >= 0
+    end
+
+    def maxshape
+      dataspace_id = HDF5::FFI.H5Dget_space(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset dataspace' if dataspace_id < 0
+
+      rank = HDF5::FFI.H5Sget_simple_extent_ndims(dataspace_id)
+      return [] if rank.zero?
+
+      maximums = ::FFI::MemoryPointer.new(:ulong_long, rank)
+      status = HDF5::FFI.H5Sget_simple_extent_dims(dataspace_id, nil, maximums)
+      raise HDF5::Error, 'Failed to get dataset maximum shape' if status < 0
+
+      unlimited = (1 << (::FFI.type_size(:ulong_long) * 8)) - 1
+      maximums.read_array_of_uint64(rank).map { |dimension| dimension == unlimited ? nil : dimension }
+    ensure
+      HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+    end
+
+    def resize(new_shape)
+      raise HDF5::Error, 'Dataset shape must be an Array matching dataset rank' unless new_shape.is_a?(Array) && new_shape.length == shape.length
+      raise HDF5::Error, 'Dataset dimensions must be non-negative integers' unless new_shape.all? { |dimension| dimension.is_a?(Integer) && dimension >= 0 }
+
+      maxshape.zip(new_shape).each do |maximum, dimension|
+        raise HDF5::Error, 'Dataset shape exceeds maxshape' if maximum && dimension > maximum
+      end
+
+      dimensions = ::FFI::MemoryPointer.new(:ulong_long, new_shape.length)
+      dimensions.write_array_of_ulong_long(new_shape)
+      status = HDF5::FFI.H5Dset_extent(@dataset_id, dimensions)
+      raise HDF5::Error, 'Failed to resize dataset' if status < 0
+
+      self
+    end
+
+    def append(data, axis: 0)
+      values = DataHelpers.normalize_data(data)
+      current_shape = shape
+      raise HDF5::Error, 'Cannot append to a scalar dataset' if current_shape.empty?
+      raise IndexError, "Invalid append axis: #{axis}" unless axis.is_a?(Integer) && axis.between?(0, current_shape.length - 1)
+      raise HDF5::Error, 'Appended data rank must match dataset rank' unless values.shape.length == current_shape.length
+      raise HDF5::Error, 'Appended data shape must match all non-appended dimensions' unless
+        values.shape.each_with_index.all? { |dimension, index| index == axis || dimension == current_shape[index] }
+
+      new_shape = current_shape.dup
+      new_shape[axis] += values.shape[axis]
+      resize(new_shape)
+      selection = current_shape.each_with_index.map do |dimension, index|
+        index == axis ? dimension...new_shape[index] : 0...dimension
+      end
+      write(values, selection: selection)
+      self
     end
 
     def read(selection: nil)

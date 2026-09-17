@@ -52,8 +52,8 @@ module HDF5
       Group.create(@file_id, name, &block)
     end
 
-    def create_dataset(name, data, &block)
-      Dataset.create(@file_id, name, data, &block)
+    def create_dataset(name, data = nil, **options, &block)
+      Dataset.create(@file_id, name, data, **options, &block)
     end
 
     def list_entries
