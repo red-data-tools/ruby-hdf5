@@ -25,7 +25,10 @@ class HDF5Test < Test::Unit::TestCase
     assert_equal('ffi_10', HDF5::FFI.send(:backend_for_version, 1, 13, 9))
     assert_equal('ffi_14', HDF5::FFI.send(:backend_for_version, 1, 14, 0))
     assert_equal('ffi_20', HDF5::FFI.send(:backend_for_version, 2, 0, 0))
-    assert_equal('ffi_20', HDF5::FFI.send(:backend_for_version, 3, 0, 0))
+    assert_equal('ffi_20', HDF5::FFI.send(:backend_for_version, 2, 2, 0))
+    assert_raise(RuntimeError) { HDF5::FFI.send(:backend_for_version, 1, 15, 0) }
+    assert_raise(RuntimeError) { HDF5::FFI.send(:backend_for_version, 2, 3, 0) }
+    assert_raise(RuntimeError) { HDF5::FFI.send(:backend_for_version, 3, 0, 0) }
 
     error = assert_raise(RuntimeError) do
       HDF5::FFI.send(:backend_for_version, 1, 9, 9)

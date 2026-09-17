@@ -34,9 +34,9 @@ module HDF5
       case [major, minor]
       in [1, 10..13]
         'ffi_10'
-      in [1, 14..]
+      in [1, 14]
         'ffi_14'
-      in [2.., _]
+      in [2, 0..2]
         'ffi_20'
       else
         raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
@@ -71,7 +71,7 @@ module HDF5
       H5Screate H5Screate_simple H5Sclose H5Sget_simple_extent_type H5Sget_simple_extent_ndims
       H5Sget_simple_extent_dims H5Sselect_hyperslab H5Sget_select_npoints
       H5Tcopy H5Tclose H5Tget_class H5Tget_size H5Tget_sign H5Tget_order H5Tget_precision H5Tget_offset
-      H5Tset_size H5Tset_cset H5Tis_variable_str H5Tcreate H5Tinsert H5Tenum_create H5Tenum_insert
+      H5Tset_size H5Tset_cset H5Tget_cset H5Tis_variable_str H5Tcreate H5Tinsert H5Tenum_create H5Tenum_insert
       H5Tenum_valueof H5Tget_nmembers H5Tget_member_index H5Tget_member_offset H5Tget_member_type H5Tget_super
       H5Pcreate H5Pclose H5Pset_chunk H5Pget_chunk H5Pget_layout H5Pset_deflate H5Pset_shuffle H5Pset_fletcher32
       H5Pset_fill_value H5Pget_fill_value H5Zfilter_avail H5Zget_filter_info
