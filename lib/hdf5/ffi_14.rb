@@ -2891,12 +2891,6 @@ module HDF5
 
     FposT = C_FposT
 
-    attach_variable :stdin, :stdin, FILE.ptr
-
-    attach_variable :stdout, :stdout, FILE.ptr
-
-    attach_variable :stderr, :stderr, FILE.ptr
-
     attach_function 'remove', [
       :string
     ], :int
