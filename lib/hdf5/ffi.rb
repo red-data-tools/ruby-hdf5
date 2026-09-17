@@ -30,6 +30,20 @@ module HDF5
       warn e.message # if $VERBOSE
     end
 
+    def self.backend_for_version(major, minor, release)
+      case [major, minor]
+      in [1, 10..13]
+        'ffi_10'
+      in [1, 14..]
+        'ffi_14'
+      in [2.., _]
+        'ffi_20'
+      else
+        raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
+      end
+    end
+    private_class_method :backend_for_version
+
     attach_function 'H5get_libversion', %i[
       pointer
       pointer
@@ -45,16 +59,7 @@ module HDF5
     minor = minor_ptr.read_uint
     release = release_ptr.read_uint
 
-    @backend = case [major, minor]
-               in [1, 10..13]
-                 'ffi_10'
-               in [1, 14..]
-                 'ffi_14'
-               in [2.., _]
-                 'ffi_14'
-               else
-                 raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
-               end
+    @backend = backend_for_version(major, minor, release)
 
     require_relative @backend
 

@@ -20,6 +20,19 @@ class HDF5Test < Test::Unit::TestCase
     assert_kind_of(Integer, release.read_uint)
   end
 
+  test 'selects the FFI backend by HDF5 version' do
+    assert_equal('ffi_10', HDF5::FFI.send(:backend_for_version, 1, 10, 0))
+    assert_equal('ffi_10', HDF5::FFI.send(:backend_for_version, 1, 13, 9))
+    assert_equal('ffi_14', HDF5::FFI.send(:backend_for_version, 1, 14, 0))
+    assert_equal('ffi_20', HDF5::FFI.send(:backend_for_version, 2, 0, 0))
+    assert_equal('ffi_20', HDF5::FFI.send(:backend_for_version, 3, 0, 0))
+
+    error = assert_raise(RuntimeError) do
+      HDF5::FFI.send(:backend_for_version, 1, 9, 9)
+    end
+    assert_equal('Unsupported HDF5 version 1.9.9', error.message)
+  end
+
   test 'example' do
     f = HDF5::File.new(File.join(__dir__, 'fixtures', 'example.h5'))
     assert_equal(%w[foo], f.list_entries)
