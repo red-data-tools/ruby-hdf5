@@ -265,6 +265,28 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#block-instance_method" title="#block (instance method)">#<strong>block</strong>(ranges)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(selectors, shape)  &#x21d2; Selection </a>
     
 
@@ -370,7 +392,9 @@
 21
 22
 23
-24</pre>
+24
+25
+26</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 15</span>
@@ -380,8 +404,10 @@
   <span class='ivar'>@stride</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='ivar'>@count</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
   <span class='ivar'>@result_shape</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@result_axes</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
 
-  <span class='id identifier rubyid_selectors'>selectors</span><span class='period'>.</span><span class='id identifier rubyid_zip'>zip</span><span class='lparen'>(</span><span class='id identifier rubyid_shape'>shape</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_selector'>selector</span><span class='comma'>,</span> <span class='id identifier rubyid_dimension'>dimension</span><span class='op'>|</span>
+  <span class='id identifier rubyid_selectors'>selectors</span><span class='period'>.</span><span class='id identifier rubyid_zip'>zip</span><span class='lparen'>(</span><span class='id identifier rubyid_shape'>shape</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each_with_index'>each_with_index</span> <span class='kw'>do</span> <span class='op'>|</span><span class='lparen'>(</span><span class='id identifier rubyid_selector'>selector</span><span class='comma'>,</span> <span class='id identifier rubyid_dimension'>dimension</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_axis'>axis</span><span class='op'>|</span>
+    <span class='ivar'>@result_axes</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_axis'>axis</span> <span class='kw'>unless</span> <span class='id identifier rubyid_selector'>selector</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Integer</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_normalize_axis'>normalize_axis</span><span class='lparen'>(</span><span class='id identifier rubyid_selector'>selector</span><span class='comma'>,</span> <span class='id identifier rubyid_dimension'>dimension</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -637,7 +663,57 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="scalar?-instance_method">
+  <h3 class="signature first" id="block-instance_method">
+  
+    #<strong>block</strong>(ranges)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 36</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_block'>block</span><span class='lparen'>(</span><span class='id identifier rubyid_ranges'>ranges</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_dup'>dup</span>
+  <span class='id identifier rubyid_starts'>starts</span> <span class='op'>=</span> <span class='id identifier rubyid_start'>start</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span>
+  <span class='id identifier rubyid_counts'>counts</span> <span class='op'>=</span> <span class='id identifier rubyid_count'>count</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span>
+  <span class='ivar'>@result_axes</span><span class='period'>.</span><span class='id identifier rubyid_zip'>zip</span><span class='lparen'>(</span><span class='id identifier rubyid_ranges'>ranges</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_axis'>axis</span><span class='comma'>,</span> <span class='id identifier rubyid_range'>range</span><span class='op'>|</span>
+    <span class='id identifier rubyid_starts'>starts</span><span class='lbracket'>[</span><span class='id identifier rubyid_axis'>axis</span><span class='rbracket'>]</span> <span class='op'>+=</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span> <span class='op'>*</span> <span class='id identifier rubyid_stride'>stride</span><span class='lbracket'>[</span><span class='id identifier rubyid_axis'>axis</span><span class='rbracket'>]</span>
+    <span class='id identifier rubyid_counts'>counts</span><span class='lbracket'>[</span><span class='id identifier rubyid_axis'>axis</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_end'>end</span> <span class='op'>-</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@start</span><span class='comma'>,</span> <span class='id identifier rubyid_starts'>starts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@count</span><span class='comma'>,</span> <span class='id identifier rubyid_counts'>counts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@result_shape</span><span class='comma'>,</span> <span class='id identifier rubyid_ranges'>ranges</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_range'>range</span><span class='op'>|</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_end'>end</span> <span class='op'>-</span> <span class='id identifier rubyid_range'>range</span><span class='period'>.</span><span class='id identifier rubyid_begin'>begin</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_result'>result</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="scalar?-instance_method">
   
     #<strong>scalar?</strong>  &#x21d2; <tt>Boolean</tt> 
   
@@ -673,12 +749,12 @@
       <pre class="lines">
 
 
-26
-27
-28</pre>
+28
+29
+30</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 26</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 28</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_scalar?'>scalar?</span>
   <span class='id identifier rubyid_result_shape'>result_shape</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -703,12 +779,12 @@
       <pre class="lines">
 
 
-30
-31
-32</pre>
+32
+33
+34</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 30</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/selection.rb', line 32</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_size'>size</span>
   <span class='id identifier rubyid_count'>count</span><span class='period'>.</span><span class='id identifier rubyid_inject'>inject</span><span class='lparen'>(</span><span class='int'>1</span><span class='comma'>,</span> <span class='symbol'>:*</span><span class='rparen'>)</span>
@@ -723,7 +799,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 07:01:23 2026 by
+  Generated on Thu Sep 17 08:52:10 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
