@@ -36,6 +36,18 @@ class HDF5Test < Test::Unit::TestCase
     assert_equal('Unsupported HDF5 version 1.9.9', error.message)
   end
 
+  test 'generated FFI backends attach only HDF5 functions' do
+    backends = Dir[File.expand_path('../lib/hdf5/ffi_*.rb', __dir__)].sort
+
+    backends.each do |backend|
+      functions = File.foreach(backend).filter_map do |line|
+        line[/^    attach_function '([^']+)'/, 1]
+      end
+
+      assert_equal([], functions.reject { |name| name.start_with?('H5') }, backend)
+    end
+  end
+
   test 'example' do
     f = HDF5::File.new(File.join(__dir__, 'fixtures', 'example.h5'))
     assert_equal(%w[foo], f.list_entries)
