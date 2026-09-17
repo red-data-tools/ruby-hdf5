@@ -25,7 +25,7 @@ module HDF5
         return if type.nil?
 
         status = HDF5::FFI.public_send(CLOSE_FUNCTIONS.fetch(type), id)
-        raise HDF5::Error, "Failed to close HDF5 #{type}" if status < 0
+        raise NativeError, "Failed to close HDF5 #{type}" if status < 0
 
         @handles.delete(id)
         @closed = true if type == :file

@@ -58,8 +58,9 @@ module HDF5
         @result_shape << dimension
       when Integer
         index = selector.negative? ? dimension + selector : selector
-        raise IndexError, "Index #{selector} is outside dimension of size #{dimension}" unless index.between?(0,
-                                                                                                              dimension - 1)
+        unless index.between?(0, dimension - 1)
+          raise IndexError, "Index #{selector} is outside dimension of size #{dimension}"
+        end
 
         @start << index
         @stride << 1
@@ -71,6 +72,11 @@ module HDF5
         @count << last - first
         @result_shape << last - first
       when HDF5::Slice
+        unless selector.step.is_a?(Integer) && selector.step.positive?
+          raise IndexError, 'Slice step must be a positive integer'
+        end
+        raise IndexError, 'Slice range must be a Range' unless selector.range.is_a?(Range)
+
         first, last = normalize_range(selector.range, dimension)
         count = (last - first).fdiv(selector.step).ceil
         @start << first
@@ -83,6 +89,10 @@ module HDF5
     end
 
     def normalize_range(range, dimension)
+      unless [range.begin, range.end].all? { |value| value.nil? || value.is_a?(Integer) }
+        raise IndexError, 'Range endpoints must be integers'
+      end
+
       first = range.begin.nil? ? 0 : range.begin
       last = range.end.nil? ? dimension : range.end
       first += dimension if first.negative?

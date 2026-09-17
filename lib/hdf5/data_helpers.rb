@@ -2,8 +2,12 @@ module HDF5
   module DataHelpers
     module_function
 
-    def normalize_data(data, label: 'Data', dtype: nil, casting: :safe, convert: true)
+    def validate_casting!(casting)
       raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+    end
+
+    def normalize_data(data, label: 'Data', dtype: nil, casting: :safe, convert: true)
+      validate_casting!(casting)
 
       if data.is_a?(Numo::NArray)
         source = DType.for_numo(data)
@@ -29,7 +33,8 @@ module HDF5
 
       shape = array_shape(data)
       values = data.is_a?(Array) ? (shape.length <= 1 ? data : data.flatten) : [data]
-      raise HDF5::Error, "#{label} must not be empty without an explicit dtype" if values.empty? && !dtype
+      raise ConversionError, "#{label} must not be empty without an explicit dtype" if values.empty? && !dtype
+
       if dtype.nil? && shape.length > 1
         homogeneous = normalize_homogeneous_array(data, values, casting:)
         return homogeneous if homogeneous
@@ -70,10 +75,10 @@ module HDF5
         elsif value.equal?(true) || value.equal?(false)
           current = :bool
         else
-          raise HDF5::Error, "Only numeric #{label.downcase} is supported"
+          raise ConversionError, "Only numeric #{label.downcase} is supported"
         end
         if kind && (kind == :bool) != (current == :bool)
-          raise HDF5::Error, "Only numeric #{label.downcase} is supported"
+          raise ConversionError, "Only numeric #{label.downcase} is supported"
         end
         kind = current if kind.nil? || current == :complex128 || current == :float64 && kind == :int64
       end

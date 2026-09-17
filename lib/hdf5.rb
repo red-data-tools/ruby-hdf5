@@ -60,6 +60,7 @@ module HDF5
   self.lib_path = search_hdf5lib
 end
 
+require_relative 'hdf5/native'
 require_relative 'hdf5/ffi'
 
 require_relative 'hdf5/file_context'

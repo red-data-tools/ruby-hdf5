@@ -39,7 +39,7 @@ module HDF5
       in [2, 0..2]
         'ffi_20'
       else
-        raise "Unsupported HDF5 version #{major}.#{minor}.#{release}"
+        raise UnsupportedFeatureError, "Unsupported HDF5 version #{major}.#{minor}.#{release}"
       end
     end
     private_class_method :backend_for_version
@@ -53,7 +53,7 @@ module HDF5
     major_ptr = ::FFI::MemoryPointer.new(:uint)
     minor_ptr = ::FFI::MemoryPointer.new(:uint)
     release_ptr = ::FFI::MemoryPointer.new(:uint)
-    HDF5::FFI.H5get_libversion(major_ptr, minor_ptr, release_ptr)
+    Native.check(HDF5::FFI.H5get_libversion(major_ptr, minor_ptr, release_ptr), 'Failed to get HDF5 library version')
 
     major = major_ptr.read_uint
     minor = minor_ptr.read_uint

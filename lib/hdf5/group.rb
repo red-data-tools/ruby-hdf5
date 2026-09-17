@@ -13,7 +13,7 @@ module HDF5
         begin
           yield group
         ensure
-          group.close
+          Native.close_object(group)
         end
       end
 
@@ -24,7 +24,7 @@ module HDF5
         begin
           yield group
         ensure
-          group.close
+          Native.close_object(group)
         end
       end
 
@@ -44,7 +44,11 @@ module HDF5
     def close
       return if @group_id.nil?
 
-      @context ? @context.close(@group_id) : HDF5::FFI.H5Gclose(@group_id)
+      if @context
+        @context.close(@group_id)
+      else
+        Native.check(HDF5::FFI.H5Gclose(@group_id), 'Failed to close HDF5 group')
+      end
       @group_id = nil
     end
 
@@ -62,7 +66,7 @@ module HDF5
       begin
         block.call(group)
       ensure
-        group.close
+        Native.close_object(group)
       end
     end
 
@@ -76,7 +80,7 @@ module HDF5
       begin
         block.call(dataset)
       ensure
-        dataset.close
+        Native.close_object(dataset)
       end
     end
 
@@ -88,28 +92,29 @@ module HDF5
         0 # continue
       end
 
-      (if HDF5::FFI::MiV == 10
-         HDF5::FFI.H5Literate(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-       else
-         HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-       end).negative? &&
-        raise(HDF5::Error, 'Failed to list entries')
+      status = if HDF5::FFI::MiV == 10
+                 HDF5::FFI.H5Literate(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+               else
+                 HDF5::FFI.H5Literate2(@group_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+               end
+      Native.check(status, 'Failed to list entries')
 
       entries
     end
 
     def list_datasets
-      list_entries.select { |name| dataset?(name) }
+      list_entries.select { |name| object_type(name) == :H5O_TYPE_DATASET }
     end
 
     def [](name)
       ensure_open!
-      if group?(name)
+      case object_type(name)
+      when :H5O_TYPE_GROUP
         self.class.open(@group_id, name, @context)
-      elsif dataset?(name)
+      when :H5O_TYPE_DATASET
         Dataset.open(@group_id, name, context: @context)
       else
-        raise HDF5::Error, "Group or dataset not found: #{name}"
+        raise UnsupportedTypeError, "Object is not a group or dataset: #{name}"
       end
     end
 
@@ -126,7 +131,7 @@ module HDF5
     end
 
     def initialize_from_id(group_id, name, context)
-      raise HDF5::Error, "Failed to open group: #{name}" if group_id < 0
+      raise NativeError, "Failed to open group: #{name}" if group_id < 0
 
       @group_id = group_id
       @name = name
@@ -138,32 +143,6 @@ module HDF5
       raise ClosedError, 'HDF5 group is closed' if @group_id.nil?
 
       @context&.ensure_open!(@group_id)
-    end
-
-    def group?(name)
-      info = if HDF5::FFI::MiV == 10
-               HDF5::FFI::H5OInfoT.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name(@group_id, name, i, 0)
-               end
-             else
-               HDF5::FFI::H5OInfo1T.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name1(@group_id, name, i, 0)
-               end
-             end
-      info[:type] == :H5O_TYPE_GROUP
-    end
-
-    def dataset?(name)
-      info = if HDF5::FFI::MiV == 10
-               HDF5::FFI::H5OInfoT.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name(@group_id, name, i, 0)
-               end
-             else
-               HDF5::FFI::H5OInfo1T.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name1(@group_id, name, i, 0)
-               end
-             end
-      info[:type] == :H5O_TYPE_DATASET
     end
 
     prepend FileContext.guard(:list_entries, :list_datasets, :[], :attrs, :close, :closed?)

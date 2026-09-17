@@ -21,7 +21,7 @@ module HDF5
 
     def self.for_numo(value)
       type = TYPES.values.find { |numo_class,| value.is_a?(numo_class) }
-      raise HDF5::Error, "Unsupported Numo type: #{value.class}" unless type
+      raise UnsupportedTypeError, "Unsupported Numo type: #{value.class}" unless type
 
       symbol = TYPES.key(type)
       new(symbol, *type)
@@ -33,13 +33,14 @@ module HDF5
                    hdf5_class: :H5T_STRING, encoding: Encoding::UTF_8)
       end
 
-      type = TYPES.fetch(symbol) { raise HDF5::Error, "Unsupported dtype: #{symbol.inspect}" }
+      type = TYPES.fetch(symbol) { raise UnsupportedTypeError, "Unsupported dtype: #{symbol.inspect}" }
       new(symbol, *type)
     end
 
     def self.for_hdf5(type_id)
-      type_class = HDF5::FFI.H5Tget_class(type_id)
+      type_class = Native.datatype_class(type_id)
       itemsize = HDF5::FFI.H5Tget_size(type_id)
+      raise NativeError, 'Failed to get datatype size' if itemsize.zero?
       if type_class == :H5T_STRING
         return new(:string, Numo::RObject, nil, nil, :string, itemsize, byteorder: :none,
                    hdf5_class: type_class, encoding: StringCodec.encoding_for(type_id))
@@ -49,7 +50,10 @@ module HDF5
 
       symbol = case type_class
                when :H5T_INTEGER
-                 prefix = HDF5::FFI.H5Tget_sign(type_id) == :H5T_SGN_NONE ? 'uint' : 'int'
+                 sign = HDF5::FFI.H5Tget_sign(type_id)
+                 raise NativeError, 'Failed to get datatype sign' if sign == :H5T_SGN_ERROR
+
+                 prefix = sign == :H5T_SGN_NONE ? 'uint' : 'int'
                  "#{prefix}#{itemsize * 8}".to_sym
                when :H5T_FLOAT
                  "float#{itemsize * 8}".to_sym
@@ -58,7 +62,10 @@ module HDF5
                end
 
       precision = HDF5::FFI.H5Tget_precision(type_id)
+      raise NativeError, 'Failed to get datatype precision' if precision.zero?
+
       offset = HDF5::FFI.H5Tget_offset(type_id)
+      Native.check(offset, 'Failed to get datatype bit offset')
       unless precision == itemsize * 8
         raise UnsupportedTypeError,
               "Unsupported #{precision}-bit datatype in #{itemsize * 8}-bit storage"
@@ -66,10 +73,13 @@ module HDF5
       raise UnsupportedTypeError, "Unsupported datatype bit offset: #{offset}" unless offset.zero?
 
       order = HDF5::FFI.H5Tget_order(type_id)
+      raise NativeError, 'Failed to get datatype byte order' if order == :H5T_ORDER_ERROR
+
       byteorder = { H5T_ORDER_LE: :little, H5T_ORDER_BE: :big, H5T_ORDER_NONE: :none }.fetch(order) do
         raise UnsupportedTypeError, "Unsupported datatype byte order: #{order}"
       end
-      new(symbol, *TYPES.fetch(symbol), byteorder:, precision:, offset:, hdf5_class: type_class)
+      type = TYPES.fetch(symbol) { raise UnsupportedTypeError, "Unsupported HDF5 datatype size: #{itemsize}" }
+      new(symbol, *type, byteorder:, precision:, offset:, hdf5_class: type_class)
     end
 
     def self.for_bool_hdf5(type_id, itemsize)
@@ -102,7 +112,7 @@ module HDF5
           valid &&= member_dtype && member_dtype.kind == :float && member_dtype.itemsize == component_size
           byteorders << member_dtype.byteorder if member_dtype
         ensure
-          HDF5::FFI.H5Tclose(member_type_id) if member_type_id >= 0
+          Native.close([:H5Tclose, member_type_id])
         end
       end
       valid &&= byteorders.length == 2 && byteorders.uniq.length == 1
@@ -151,7 +161,7 @@ module HDF5
     end
 
     def castable_to?(target, casting: :safe)
-      raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+      DataHelpers.validate_casting!(casting)
       return true if casting == :unsafe || to_sym == target.to_sym
 
       if kind == :integer && target.kind == :integer
@@ -184,14 +194,14 @@ module HDF5
         @bool_type_ids[native] ||= begin
           base_id = HDF5::FFI.public_send(native ? :H5T_NATIVE_INT8_g : :H5T_STD_I8LE_g)
           type_id = HDF5::FFI.H5Tenum_create(base_id)
-          raise HDF5::Error, 'Failed to create bool datatype' if type_id < 0
+          raise NativeError, 'Failed to create bool datatype' if type_id < 0
 
           false_value = ::FFI::MemoryPointer.new(:int8).tap { |pointer| pointer.write_int8(0) }
           true_value = ::FFI::MemoryPointer.new(:int8).tap { |pointer| pointer.write_int8(1) }
           if HDF5::FFI.H5Tenum_insert(type_id, 'FALSE', false_value) < 0 ||
              HDF5::FFI.H5Tenum_insert(type_id, 'TRUE', true_value) < 0
             HDF5::FFI.H5Tclose(type_id)
-            raise HDF5::Error, 'Failed to define bool datatype'
+            raise NativeError, 'Failed to define bool datatype'
           end
 
           type_id
@@ -207,12 +217,12 @@ module HDF5
                            HDF5::FFI.public_send(size == 8 ? :H5T_IEEE_F32LE_g : :H5T_IEEE_F64LE_g)
                          end
           type_id = HDF5::FFI.H5Tcreate(:H5T_COMPOUND, size)
-          raise HDF5::Error, 'Failed to create complex datatype' if type_id < 0
+          raise NativeError, 'Failed to create complex datatype' if type_id < 0
 
           if HDF5::FFI.H5Tinsert(type_id, 'r', 0, component_id) < 0 ||
              HDF5::FFI.H5Tinsert(type_id, 'i', size / 2, component_id) < 0
             HDF5::FFI.H5Tclose(type_id)
-            raise HDF5::Error, 'Failed to define complex datatype'
+            raise NativeError, 'Failed to define complex datatype'
           end
 
           type_id

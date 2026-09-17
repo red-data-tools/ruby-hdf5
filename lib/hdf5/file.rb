@@ -16,7 +16,7 @@ module HDF5
         begin
           yield file
         ensure
-          file.close
+          Native.close_object(file)
         end
       end
 
@@ -28,7 +28,7 @@ module HDF5
         begin
           yield file
         ensure
-          file.close
+          Native.close_object(file)
         end
       end
 
@@ -82,7 +82,7 @@ module HDF5
     def flush
       ensure_open!
       status = HDF5::FFI.H5Fflush(@file_id, :H5F_SCOPE_GLOBAL)
-      raise HDF5::Error, 'Failed to flush file' if status < 0
+      raise NativeError, 'Failed to flush file' if status < 0
 
       self
     end
@@ -97,7 +97,7 @@ module HDF5
       begin
         block.call(group)
       ensure
-        group.close
+        Native.close_object(group)
       end
     end
 
@@ -111,7 +111,7 @@ module HDF5
       begin
         block.call(dataset)
       ensure
-        dataset.close
+        Native.close_object(dataset)
       end
     end
 
@@ -123,24 +123,25 @@ module HDF5
         0 # continue
       end
 
-      case HDF5::FFI::MiV
-      when 10
-        HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-      else
-        HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
-      end.negative? && raise(HDF5::Error, 'Failed to iterate over file entries')
+      status = if HDF5::FFI::MiV == 10
+                 HDF5::FFI.H5Literate(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+               else
+                 HDF5::FFI.H5Literate2(@file_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, nil, callback, nil)
+               end
+      Native.check(status, 'Failed to iterate over file entries')
 
       list
     end
 
     def [](name)
       ensure_open!
-      if group?(name)
+      case object_type(name)
+      when :H5O_TYPE_GROUP
         Group.open(@file_id, name, @context)
-      elsif dataset?(name)
+      when :H5O_TYPE_DATASET
         Dataset.open(@file_id, name, context: @context)
       else
-        raise HDF5::Error, "Group or dataset not found: #{name}"
+        raise UnsupportedTypeError, "Object is not a group or dataset: #{name}"
       end
     end
 
@@ -157,7 +158,7 @@ module HDF5
     end
 
     def initialize_from_id(file_id, filename, mode)
-      raise HDF5::Error, "Failed to open file: #{filename}" if file_id < 0
+      raise NativeError, "Failed to open file: #{filename}" if file_id < 0
 
       @filename = filename
       @mode = mode
@@ -169,32 +170,6 @@ module HDF5
       raise ClosedError, 'HDF5 file is closed' if @file_id.nil?
 
       @context.ensure_open!(@file_id)
-    end
-
-    def group?(name)
-      info = if HDF5::FFI::MiV == 10
-               HDF5::FFI::H5OInfoT.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name(@file_id, name, i, 0)
-               end
-             else
-               HDF5::FFI::H5OInfo1T.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name1(@file_id, name, i, 0)
-               end
-             end
-      info[:type] == :H5O_TYPE_GROUP
-    end
-
-    def dataset?(name)
-      info = if HDF5::FFI::MiV == 10
-               HDF5::FFI::H5OInfoT.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name(@file_id, name, i, 0)
-               end
-             else
-               HDF5::FFI::H5OInfo1T.new.tap do |i|
-                 HDF5::FFI.H5Oget_info_by_name1(@file_id, name, i, 0)
-               end
-             end
-      info[:type] == :H5O_TYPE_DATASET
     end
 
     prepend FileContext.guard(:flush, :list_entries, :[], :attrs, :close, :closed?)

@@ -5,27 +5,31 @@ module HDF5
     def initialize(dataset_id, attr_name, context = nil)
       @dataset_id = dataset_id
       @attr_name = attr_name
+      @context = context
       context&.ensure_open!(dataset_id)
       @attr_id = HDF5::FFI.H5Aopen(@dataset_id, @attr_name, HDF5::DEFAULT_PROPERTY_LIST)
-      raise HDF5::Error, 'Failed to open attribute' if @attr_id < 0
+      raise NativeError, 'Failed to open attribute' if @attr_id < 0
     end
 
     def read
+      raise ClosedError, 'HDF5 attribute is closed' if @attr_id.nil?
+
+      @context&.ensure_open!(@dataset_id)
       type_id = HDF5::FFI.H5Aget_type(@attr_id)
-      raise HDF5::Error, 'Failed to get attribute datatype' if type_id < 0
+      raise NativeError, 'Failed to get attribute datatype' if type_id < 0
 
       space_id = HDF5::FFI.H5Aget_space(@attr_id)
-      raise HDF5::Error, 'Failed to get attribute dataspace' if space_id < 0
-      return HDF5::Empty.new(DType.for_hdf5(type_id)) if HDF5::FFI.H5Sget_simple_extent_type(space_id) == :H5S_NULL
+      raise NativeError, 'Failed to get attribute dataspace' if space_id < 0
+      return HDF5::Empty.new(DType.for_hdf5(type_id)) if Native.extent_type(space_id) == :H5S_NULL
 
-      return read_string(type_id, space_id) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+      return read_string(type_id, space_id) if Native.datatype_class(type_id) == :H5T_STRING
 
       dtype_object = DType.for_hdf5(type_id)
       attribute_shape = shape(space_id)
       size = attribute_shape.empty? ? 1 : attribute_shape.inject(:*)
       buffer = ::FFI::MemoryPointer.new(:char, size * dtype_object.itemsize)
       status = HDF5::FFI.H5Aread(@attr_id, dtype_object.memory_type_id, buffer)
-      raise HDF5::Error, 'Failed to read attribute' if status < 0
+      raise NativeError, 'Failed to read attribute' if status < 0
 
       result = HDF5::DataHelpers.from_binary(dtype_object, buffer.read_bytes(size * dtype_object.itemsize),
                                              attribute_shape)
@@ -34,14 +38,13 @@ module HDF5
       scalar = result.extract
       dtype_object.kind == :bool ? !scalar.zero? : scalar
     ensure
-      HDF5::FFI.H5Tclose(type_id) if type_id && type_id >= 0
-      HDF5::FFI.H5Sclose(space_id) if space_id && space_id >= 0
+      Native.close([:H5Tclose, type_id], [:H5Sclose, space_id])
     end
 
     def close
       return if @attr_id.nil?
 
-      HDF5::FFI.H5Aclose(@attr_id)
+      Native.check(HDF5::FFI.H5Aclose(@attr_id), 'Failed to close HDF5 attribute')
       @attr_id = nil
     end
 
@@ -49,12 +52,12 @@ module HDF5
 
     def shape(space_id)
       rank = HDF5::FFI.H5Sget_simple_extent_ndims(space_id)
-      raise HDF5::Error, 'Failed to get attribute rank' if rank < 0
+      raise NativeError, 'Failed to get attribute rank' if rank < 0
       return [] if rank.zero?
 
       dimensions = ::FFI::MemoryPointer.new(:ulong_long, rank)
       status = HDF5::FFI.H5Sget_simple_extent_dims(space_id, dimensions, nil)
-      raise HDF5::Error, 'Failed to get attribute shape' if status < 0
+      raise NativeError, 'Failed to get attribute shape' if status < 0
 
       dimensions.read_array_of_uint64(rank)
     end
@@ -70,7 +73,7 @@ module HDF5
 
       buffer = ::FFI::MemoryPointer.new(:pointer, count)
       status = HDF5::FFI.H5Aread(@attr_id, type_id, buffer)
-      raise HDF5::Error, 'Failed to read string attribute' if status < 0
+      raise NativeError, 'Failed to read string attribute' if status < 0
 
       HDF5::StringCodec.read_values(buffer, count, attribute_shape, encoding: HDF5::StringCodec.encoding_for(type_id))
     ensure
@@ -78,7 +81,7 @@ module HDF5
         active_error = $ERROR_INFO
         reclaim_status = HDF5::FFI.H5Dvlen_reclaim(type_id, space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer)
         if reclaim_status.negative? && active_error.nil?
-          raise HDF5::Error,
+          raise NativeError,
                 'Failed to reclaim variable-length string attribute'
         end
       end
@@ -96,7 +99,7 @@ module HDF5
       attr = Attribute.new(@dataset_id, attr_name, @context)
       attr.read
     ensure
-      attr.close if attr
+      Native.close_object(attr)
     end
 
     def []=(attr_name, value)
@@ -113,7 +116,7 @@ module HDF5
         0
       end
       status = HDF5::FFI.H5Aiterate2(@dataset_id, :H5_INDEX_NAME, :H5_ITER_NATIVE, index, callback, nil)
-      raise HDF5::Error, 'Failed to iterate over attributes' if status < 0
+      raise NativeError, 'Failed to iterate over attributes' if status < 0
 
       names
     end
@@ -121,7 +124,7 @@ module HDF5
     def key?(attr_name)
       @context&.ensure_open!(@dataset_id)
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
-      raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
+      raise NativeError, "Failed to check attribute existence: #{attr_name}" if exists.negative?
 
       exists.positive?
     end
@@ -129,7 +132,7 @@ module HDF5
     def delete(attr_name)
       @context&.ensure_open!(@dataset_id)
       status = HDF5::FFI.H5Adelete(@dataset_id, attr_name)
-      raise HDF5::Error, "Failed to delete attribute: #{attr_name}" if status < 0
+      raise NativeError, "Failed to delete attribute: #{attr_name}" if status < 0
 
       self
     end
@@ -142,22 +145,24 @@ module HDF5
 
     def modify(attr_name, value, casting: :safe)
       @context&.ensure_open!(@dataset_id)
+      DataHelpers.validate_casting!(casting)
       raise HDF5::Error, "Attribute not found: #{attr_name}" unless key?(attr_name)
 
       attr_id = HDF5::FFI.H5Aopen(@dataset_id, attr_name, HDF5::DEFAULT_PROPERTY_LIST)
-      raise HDF5::Error, "Failed to open attribute: #{attr_name}" if attr_id < 0
+      raise NativeError, "Failed to open attribute: #{attr_name}" if attr_id < 0
 
       type_id = HDF5::FFI.H5Aget_type(attr_id)
       space_id = HDF5::FFI.H5Aget_space(attr_id)
-      raise HDF5::Error, "Failed to inspect attribute: #{attr_name}" if type_id < 0 || space_id < 0
-      if HDF5::FFI.H5Sget_simple_extent_type(space_id) == :H5S_NULL
+      raise NativeError, "Failed to inspect attribute: #{attr_name}" if type_id < 0 || space_id < 0
+
+      if Native.extent_type(space_id) == :H5S_NULL
         unless value.is_a?(HDF5::Empty) && value.dtype.to_sym == DType.for_hdf5(type_id).to_sym
-          raise HDF5::ShapeError, 'Cannot assign a value to a Null attribute'
+          raise ShapeError, 'Cannot assign a value to a Null attribute'
         end
         return value
       end
 
-      if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+      if Native.datatype_class(type_id) == :H5T_STRING
         unless HDF5::StringCodec.variable?(type_id)
           raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported'
         end
@@ -165,7 +170,7 @@ module HDF5
         encoding = HDF5::StringCodec.encoding_for(type_id)
         string_values, string_shape = HDF5::StringCodec.normalize_data(value, encoding:)
         unless string_shape == attribute_shape(space_id)
-          raise HDF5::ShapeError,
+          raise ShapeError,
                 'Attribute shape must not change when modifying'
         end
 
@@ -175,22 +180,20 @@ module HDF5
         dtype_object = DType.for_hdf5(type_id)
         values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data', dtype: dtype_object, casting:, convert: false)
         expected_shape = attribute_shape(space_id)
-        raise HDF5::Error, 'Attribute shape must not change when modifying' unless values.shape == expected_shape
+        raise ShapeError, 'Attribute shape must not change when modifying' unless values.shape == expected_shape
 
         status = HDF5::FFI.H5Awrite(attr_id, DType.for_numo(values).memory_type_id, HDF5::DataHelpers.buffer_for(values))
       end
-      raise HDF5::Error, "Failed to modify attribute: #{attr_name}" if status < 0
+      raise NativeError, "Failed to modify attribute: #{attr_name}" if status < 0
 
       value
     ensure
-      HDF5::FFI.H5Sclose(space_id) if space_id && space_id >= 0
-      HDF5::FFI.H5Tclose(type_id) if type_id && type_id >= 0
-      HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
+      Native.close([:H5Sclose, space_id], [:H5Tclose, type_id], [:H5Aclose, attr_id])
     end
 
     def write(attr_name, value, dtype: nil, casting: :safe)
       @context&.ensure_open!(@dataset_id)
-      raise ArgumentError, "Unsupported casting mode: #{casting.inspect}" unless %i[safe unsafe].include?(casting)
+      DataHelpers.validate_casting!(casting)
 
       empty_data = value.is_a?(HDF5::Empty)
       explicit_dtype = DType.for_symbol(dtype) if dtype
@@ -209,13 +212,13 @@ module HDF5
       type_id = string_type ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
 
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
-      raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
+      raise NativeError, "Failed to check attribute existence: #{attr_name}" if exists.negative?
 
       # Write a replacement completely before changing the existing attribute.
       written_name = exists.positive? ? temporary_attribute_name : attr_name
 
       dataspace_id = create_dataspace(empty_data ? nil : (string_data ? string_shape : values.shape))
-      raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
+      raise NativeError, 'Failed to create attribute dataspace' if dataspace_id < 0
 
       attr_id = HDF5::FFI.H5Acreate2(
         @dataset_id,
@@ -225,7 +228,8 @@ module HDF5
         HDF5::DEFAULT_PROPERTY_LIST,
         HDF5::DEFAULT_PROPERTY_LIST
       )
-      raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
+      raise NativeError, "Failed to create attribute: #{attr_name}" if attr_id < 0
+
       created = true
 
       unless empty_data || string_data && string_values.empty?
@@ -236,7 +240,7 @@ module HDF5
                                    end
         memory_type_id = string_data ? type_id : dtype_object.memory_type_id
         status = HDF5::FFI.H5Awrite(attr_id, memory_type_id, buffer)
-        raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
+        raise NativeError, "Failed to write attribute: #{attr_name}" if status < 0
       end
 
       replace_attribute(attr_name, written_name) if exists.positive?
@@ -244,12 +248,13 @@ module HDF5
 
       value
     ensure
-      HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
-      if created && !initialized && HDF5::FFI.H5Aexists(@dataset_id, written_name).positive?
-        HDF5::FFI.H5Adelete(@dataset_id, written_name)
+      begin
+        if created && !initialized && HDF5::FFI.H5Aexists(@dataset_id, written_name).positive?
+          HDF5::FFI.H5Adelete(@dataset_id, written_name)
+        end
+      ensure
+        Native.close([:H5Aclose, attr_id], [:H5Sclose, dataspace_id], [:H5Tclose, string_type ? type_id : nil])
       end
-      HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
-      HDF5::FFI.H5Tclose(type_id) if string_type && type_id && type_id >= 0
     end
 
     private
@@ -264,29 +269,30 @@ module HDF5
     def replace_attribute(attr_name, written_name)
       backup_name = temporary_attribute_name
       if HDF5::FFI.H5Arename(@dataset_id, attr_name, backup_name).negative?
-        raise HDF5::Error, "Failed to back up attribute: #{attr_name}"
+        raise NativeError, "Failed to back up attribute: #{attr_name}"
       end
 
       if HDF5::FFI.H5Arename(@dataset_id, written_name, attr_name).negative?
         if HDF5::FFI.H5Arename(@dataset_id, backup_name, attr_name).negative?
-          raise HDF5::Error, "Failed to replace attribute: #{attr_name}; original retained as #{backup_name}"
+          raise NativeError, "Failed to replace attribute: #{attr_name}; original retained as #{backup_name}"
         end
-        raise HDF5::Error, "Failed to replace attribute: #{attr_name}"
+
+        raise NativeError, "Failed to replace attribute: #{attr_name}"
       end
 
       if HDF5::FFI.H5Adelete(@dataset_id, backup_name).negative?
-        raise HDF5::Error, "Failed to remove attribute backup: #{backup_name}"
+        raise NativeError, "Failed to remove attribute backup: #{backup_name}"
       end
     end
 
     def attribute_shape(space_id)
       rank = HDF5::FFI.H5Sget_simple_extent_ndims(space_id)
-      raise HDF5::Error, 'Failed to get attribute rank' if rank < 0
+      raise NativeError, 'Failed to get attribute rank' if rank < 0
       return [] if rank.zero?
 
       dimensions = ::FFI::MemoryPointer.new(:ulong_long, rank)
       status = HDF5::FFI.H5Sget_simple_extent_dims(space_id, dimensions, nil)
-      raise HDF5::Error, 'Failed to get attribute shape' if status < 0
+      raise NativeError, 'Failed to get attribute shape' if status < 0
 
       dimensions.read_array_of_uint64(rank)
     end
