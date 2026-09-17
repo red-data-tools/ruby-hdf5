@@ -177,6 +177,25 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'yields chunked dataset regions including a partial final chunk' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'each-chunk.h5')
+      matrix = Numo::Int16[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+      HDF5::File.create(path) { |file| file.create_dataset('matrix', matrix, chunks: [2, 2]) }
+
+      HDF5::File.open(path) do |file|
+        chunks = file['matrix'].each_chunk.to_a
+        assert_equal(4, chunks.length)
+        assert_equal([0...2, 0...2], chunks.first.first)
+        assert_equal(Numo::Int16[[1, 2], [4, 5]], chunks.first.last)
+        assert_equal([2...3, 2...3], chunks.last.first)
+        assert_equal(Numo::Int16[[9]], chunks.last.last)
+        assert_raise(HDF5::Error) { file.create_dataset('contiguous', matrix).each_chunk.to_a }
+      end
+    end
+  end
+
   test 'resizes and appends to an extendible dataset' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'extendible.h5')

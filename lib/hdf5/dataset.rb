@@ -372,6 +372,20 @@ module HDF5
       end
     end
 
+    def each_chunk
+      return enum_for(__method__) unless block_given?
+
+      chunk_shape = chunks
+      raise HDF5::Error, 'each_chunk requires a chunked dataset' unless chunk_shape
+
+      current_shape = shape
+      return if current_shape.any?(&:zero?)
+
+      each_block_selection(current_shape, chunk_shape) do |selection|
+        yield selection, read(selection: selection)
+      end
+    end
+
     private
 
     def block_shape_for(dataset_shape, max_elements)
