@@ -253,12 +253,12 @@
       <pre class="lines">
 
 
-28
 29
-30</pre>
+30
+31</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 29</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_lib_path'>lib_path</span>
   <span class='ivar'>@lib_path</span>
@@ -290,7 +290,6 @@
       <pre class="lines">
 
 
-37
 38
 39
 40
@@ -309,10 +308,11 @@
 53
 54
 55
-56</pre>
+56
+57</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 37</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 38</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_search_hdf5lib'>search_hdf5lib</span>
   <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>libhdf5.</span><span class='embexpr_beg'>#{</span><span class='const'><span class='object_link'><a href="HDF5/FFI.html" title="HDF5::FFI (module)">FFI</a></span></span><span class='op'>::</span><span class='const'>Platform</span><span class='op'>::</span><span class='const'>LIBSUFFIX</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
@@ -376,15 +376,15 @@
       <pre class="lines">
 
 
-30
 31
 32
 33
 34
-35</pre>
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 30</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5.rb', line 31</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_slice'>slice</span><span class='lparen'>(</span><span class='id identifier rubyid_range'>range</span><span class='comma'>,</span> <span class='label'>step:</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>slice step must be a positive integer</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Integer</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_positive?'>positive?</span>
@@ -402,7 +402,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Sep 17 06:18:59 2026 by
+  Generated on Thu Sep 17 06:26:15 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.0.7).
 </div>
