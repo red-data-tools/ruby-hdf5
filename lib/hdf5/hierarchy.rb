@@ -85,6 +85,7 @@ module HDF5
 
       raw = buffer.read_bytes(size)
       return { type: :soft, target: raw.delete_suffix("\0") } if type == :H5L_TYPE_SOFT
+
       if type == :H5L_TYPE_EXTERNAL
         filename, path = raw.byteslice(1..).split("\0", 2)
         return { type: :external, filename:, path: path&.delete_suffix("\0") }

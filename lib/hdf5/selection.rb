@@ -42,7 +42,8 @@ module HDF5
         @result_shape << dimension
       when Integer
         index = selector.negative? ? dimension + selector : selector
-        raise IndexError, "Index #{selector} is outside dimension of size #{dimension}" unless index.between?(0, dimension - 1)
+        raise IndexError, "Index #{selector} is outside dimension of size #{dimension}" unless index.between?(0,
+                                                                                                              dimension - 1)
 
         @start << index
         @stride << 1

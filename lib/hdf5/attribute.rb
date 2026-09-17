@@ -11,6 +11,7 @@ module HDF5
     def read
       type_id = HDF5::FFI.H5Aget_type(@attr_id)
       raise HDF5::Error, 'Failed to get attribute datatype' if type_id < 0
+
       space_id = HDF5::FFI.H5Aget_space(@attr_id)
       raise HDF5::Error, 'Failed to get attribute dataspace' if space_id < 0
       return read_string(type_id, space_id) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
@@ -22,7 +23,8 @@ module HDF5
       status = HDF5::FFI.H5Aread(@attr_id, dtype_object.memory_type_id, buffer)
       raise HDF5::Error, 'Failed to read attribute' if status < 0
 
-      result = HDF5::DataHelpers.from_binary(dtype_object, buffer.read_bytes(size * dtype_object.itemsize), attribute_shape)
+      result = HDF5::DataHelpers.from_binary(dtype_object, buffer.read_bytes(size * dtype_object.itemsize),
+                                             attribute_shape)
       return result unless attribute_shape.empty?
 
       scalar = result.extract
@@ -54,7 +56,10 @@ module HDF5
     end
 
     def read_string(type_id, space_id)
-      raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported' unless HDF5::StringCodec.variable?(type_id)
+      unless HDF5::StringCodec.variable?(type_id)
+        raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported'
+      end
+
       attribute_shape = shape(space_id)
       count = attribute_shape.empty? ? 1 : attribute_shape.inject(:*)
       buffer = ::FFI::MemoryPointer.new(:pointer, count)
@@ -66,7 +71,10 @@ module HDF5
       if buffer
         active_error = $ERROR_INFO
         reclaim_status = HDF5::FFI.H5Dvlen_reclaim(type_id, space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer)
-        raise HDF5::Error, 'Failed to reclaim variable-length string attribute' if reclaim_status.negative? && active_error.nil?
+        if reclaim_status.negative? && active_error.nil?
+          raise HDF5::Error,
+                'Failed to reclaim variable-length string attribute'
+        end
       end
     end
   end
@@ -132,15 +140,21 @@ module HDF5
 
       attr_id = HDF5::FFI.H5Aopen(@dataset_id, attr_name, HDF5::DEFAULT_PROPERTY_LIST)
       raise HDF5::Error, "Failed to open attribute: #{attr_name}" if attr_id < 0
+
       type_id = HDF5::FFI.H5Aget_type(attr_id)
       space_id = HDF5::FFI.H5Aget_space(attr_id)
       raise HDF5::Error, "Failed to inspect attribute: #{attr_name}" if type_id < 0 || space_id < 0
 
       if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
-        raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported' unless HDF5::StringCodec.variable?(type_id)
+        unless HDF5::StringCodec.variable?(type_id)
+          raise UnsupportedTypeError, 'Fixed-length string attributes are not yet supported'
+        end
 
         string_values, string_shape = HDF5::StringCodec.normalize_data(value)
-        raise HDF5::ShapeError, 'Attribute shape must not change when modifying' unless string_shape == attribute_shape(space_id)
+        unless string_shape == attribute_shape(space_id)
+          raise HDF5::ShapeError,
+                'Attribute shape must not change when modifying'
+        end
 
         buffer, _string_pointers = HDF5::StringCodec.buffer_for_values(string_values)
         status = HDF5::FFI.H5Awrite(attr_id, type_id, buffer)

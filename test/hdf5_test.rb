@@ -253,7 +253,7 @@ class HDF5Test < Test::Unit::TestCase
 
       HDF5::File.create(path) do |file|
         dataset = file.create_dataset('matrix', matrix, chunks: [2, 3], compression: :gzip, compression_opts: 1,
-                                      shuffle: true, fletcher32: true)
+                                                        shuffle: true, fletcher32: true)
         assert_equal([2, 3], dataset.chunks)
         assert_equal(matrix, dataset.read)
       end
@@ -301,18 +301,18 @@ class HDF5Test < Test::Unit::TestCase
   test 'round trips multidimensional UTF-8 string datasets and attributes' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'string-arrays.h5')
-      strings = [['alpha', '日本語'], ['gamma', 'delta']]
+      strings = [%w[alpha 日本語], %w[gamma delta]]
 
       HDF5::File.create(path) do |file|
         dataset = file.create_dataset('labels', strings)
         assert_equal([2, 2], dataset.shape)
         assert_equal(strings, dataset.read.to_a)
         dataset[1, true] = Numo::RObject['epsilon', 'zeta']
-        assert_equal([['alpha', '日本語'], ['epsilon', 'zeta']], dataset.read.to_a)
+        assert_equal([%w[alpha 日本語], %w[epsilon zeta]], dataset.read.to_a)
         dataset.attrs['names'] = strings
         assert_equal(strings, dataset.attrs['names'].to_a)
-        dataset.attrs.modify('names', [['one', 'two'], ['three', 'four']])
-        assert_equal([['one', 'two'], ['three', 'four']], dataset.attrs['names'].to_a)
+        dataset.attrs.modify('names', [%w[one two], %w[three four]])
+        assert_equal([%w[one two], %w[three four]], dataset.attrs['names'].to_a)
       end
     end
   end

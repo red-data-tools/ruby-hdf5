@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'fileutils'
 require 'hdf5'
 
@@ -14,6 +16,6 @@ end
 
 begin
   HDF5::File.open(path, 'x')
-rescue HDF5::Error => error
-  warn "exclusive create failed: #{error.message}"
+rescue HDF5::Error => e
+  warn "exclusive create failed: #{e.message}"
 end

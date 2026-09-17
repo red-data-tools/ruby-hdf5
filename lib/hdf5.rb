@@ -13,6 +13,7 @@ module HDF5
   class ShapeError < Error; end
   class ConversionError < Error; end
   class NativeError < Error; end
+
   class Empty
     attr_reader :dtype
 

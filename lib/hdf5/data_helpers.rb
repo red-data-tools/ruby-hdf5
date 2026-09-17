@@ -10,7 +10,7 @@ module HDF5
 
       dtype = if values.all? { |value| value.is_a?(Integer) }
                 DType.for_symbol(:int64)
-              elsif values.all? { |value| value == true || value == false }
+              elsif values.all? { |value| [true, false].include?(value) }
                 DType.for_symbol(:bool)
               elsif values.all? { |value| value.is_a?(Numeric) } && values.any? { |value| value.is_a?(Complex) }
                 DType.for_symbol(:complex128)

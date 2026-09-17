@@ -17,7 +17,7 @@ module HDF5
     }.freeze
 
     attr_reader :numo_class, :memory_type_name, :storage_type_name, :kind, :itemsize, :byteorder, :precision, :offset,
-          :hdf5_class
+                :hdf5_class
 
     def self.for_numo(value)
       type = TYPES.values.find { |numo_class,| value.is_a?(numo_class) }
@@ -50,7 +50,10 @@ module HDF5
 
       precision = HDF5::FFI.H5Tget_precision(type_id)
       offset = HDF5::FFI.H5Tget_offset(type_id)
-      raise UnsupportedTypeError, "Unsupported #{precision}-bit datatype in #{itemsize * 8}-bit storage" unless precision == itemsize * 8
+      unless precision == itemsize * 8
+        raise UnsupportedTypeError,
+              "Unsupported #{precision}-bit datatype in #{itemsize * 8}-bit storage"
+      end
       raise UnsupportedTypeError, "Unsupported datatype bit offset: #{offset}" unless offset.zero?
 
       order = HDF5::FFI.H5Tget_order(type_id)
@@ -85,7 +88,7 @@ module HDF5
 
         member_type_id = HDF5::FFI.H5Tget_member_type(type_id, index)
         valid &&= member_type_id >= 0 && HDF5::FFI.H5Tget_class(member_type_id) == :H5T_FLOAT &&
-                   HDF5::FFI.H5Tget_size(member_type_id) == component_size
+                  HDF5::FFI.H5Tget_size(member_type_id) == component_size
         HDF5::FFI.H5Tclose(member_type_id) if member_type_id >= 0
       end
       raise UnsupportedTypeError, 'Unsupported HDF5 compound datatype' unless valid
@@ -137,9 +140,8 @@ module HDF5
 
         return itemsize < target.itemsize
       end
-      if kind == :float && target.kind == :float
-        return itemsize <= target.itemsize
-      end
+      return itemsize <= target.itemsize if kind == :float && target.kind == :float
+
       if kind == :integer && target.kind == :float
         significant_bits = unsigned? ? itemsize * 8 : itemsize * 8 - 1
         mantissa_bits = target.itemsize == 4 ? 24 : 53
@@ -183,6 +185,7 @@ module HDF5
                          end
           type_id = HDF5::FFI.H5Tcreate(:H5T_COMPOUND, size)
           raise HDF5::Error, 'Failed to create complex datatype' if type_id < 0
+
           if HDF5::FFI.H5Tinsert(type_id, 'r', 0, component_id) < 0 ||
              HDF5::FFI.H5Tinsert(type_id, 'i', size / 2, component_id) < 0
             HDF5::FFI.H5Tclose(type_id)

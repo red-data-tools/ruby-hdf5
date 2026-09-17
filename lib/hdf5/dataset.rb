@@ -6,8 +6,17 @@ module HDF5
         empty_data = data.is_a?(HDF5::Empty)
         string_data = HDF5::StringCodec.string_data?(data)
         _string_values, string_shape = HDF5::StringCodec.normalize_data(data) if string_data
-        narray = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data') unless data.nil? || string_data || empty_data
-        dtype_object = empty_data ? data.dtype : (dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)) unless string_data
+        unless data.nil? || string_data || empty_data
+          narray = HDF5::DataHelpers.normalize_data(data,
+                                                    label: 'Dataset data')
+        end
+        unless string_data
+          dtype_object = if empty_data
+                           data.dtype
+                         else
+                           (dtype ? DType.for_symbol(dtype) : DType.for_numo(narray))
+                         end
+        end
         type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
         shape = string_data ? string_shape : narray.shape if shape.nil? && !data.nil? && !empty_data
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
@@ -15,12 +24,14 @@ module HDF5
         raise HDF5::ShapeError, 'Dataset shape must match string data shape' if string_data && shape != string_shape
 
         raise HDF5::Error, 'Null datasets cannot have maxshape or chunks' if empty_data && (maxshape || chunks)
+
         validate_maxshape(maxshape, shape) if maxshape
         chunks = :auto if maxshape && chunks.nil?
         dataspace_id = create_dataspace(shape, maxshape)
         raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
+
         dcpl_id = create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:,
-                     fillvalue:)
+                                                            fillvalue:)
 
         dataset = from_id(
           HDF5::FFI.H5Dcreate2(parent_id, name, type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
@@ -68,15 +79,23 @@ module HDF5
         dims.write_array_of_ulong_long(shape)
         maxdims = if maxshape
                     ::FFI::MemoryPointer.new(:ulong_long, maxshape.length).tap do |pointer|
-                      pointer.write_array_of_ulong_long(maxshape.map { |dimension| dimension.nil? ? unlimited_dimension : dimension })
+                      pointer.write_array_of_ulong_long(maxshape.map do |dimension|
+                        dimension.nil? ? unlimited_dimension : dimension
+                      end)
                     end
                   end
         HDF5::FFI.H5Screate_simple(shape.length, dims, maxdims)
       end
 
       def validate_maxshape(maxshape, shape)
-        raise HDF5::Error, 'maxshape must be an Array matching dataset rank' unless maxshape.is_a?(Array) && maxshape.length == shape.length
-        valid = maxshape.zip(shape).all? { |maximum, dimension| maximum.nil? || maximum.is_a?(Integer) && maximum >= dimension }
+        unless maxshape.is_a?(Array) && maxshape.length == shape.length
+          raise HDF5::Error,
+                'maxshape must be an Array matching dataset rank'
+        end
+
+        valid = maxshape.zip(shape).all? do |maximum, dimension|
+          maximum.nil? || maximum.is_a?(Integer) && maximum >= dimension
+        end
         raise HDF5::Error, 'maxshape dimensions must be nil or integers no smaller than shape' unless valid
       end
 
@@ -84,18 +103,36 @@ module HDF5
         (1 << (::FFI.type_size(:ulong_long) * 8)) - 1
       end
 
-      def create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:, fillvalue:)
+      def create_property_list(shape, dtype_object, chunks:, compression:, compression_opts:, shuffle:, fletcher32:,
+                               fillvalue:)
         chunked = chunks || compression || compression_opts || shuffle || fletcher32
         return unless chunked || !fillvalue.nil?
         raise HDF5::Error, 'Chunked storage is not supported for scalar datasets' if chunked && shape.empty?
-        raise UnsupportedFeatureError, 'fillvalue is not supported for string datasets' if dtype_object.nil? && !fillvalue.nil?
+        if dtype_object.nil? && !fillvalue.nil?
+          raise UnsupportedFeatureError,
+                'fillvalue is not supported for string datasets'
+        end
         raise HDF5::Error, 'Unsupported compression' unless compression.nil? || compression == :gzip
         raise HDF5::Error, 'compression_opts requires compression: :gzip' if compression_opts && compression != :gzip
 
         itemsize = dtype_object ? dtype_object.itemsize : ::FFI.type_size(:pointer)
-        chunk_shape = chunks == :auto || chunks.nil? ? auto_chunk_shape(shape, itemsize) : validate_chunk_shape(chunks, shape) if chunked
+        if chunked
+          chunk_shape = if chunks == :auto || chunks.nil?
+                          auto_chunk_shape(shape,
+                                           itemsize)
+                        else
+                          validate_chunk_shape(chunks,
+                                               shape)
+                        end
+        end
         compression_level = compression_opts || 4
-        raise HDF5::Error, 'gzip compression_opts must be between 0 and 9' unless compression.nil? || compression_level.between?(0, 9)
+        unless compression.nil? || compression_level.between?(
+          0, 9
+        )
+          raise HDF5::Error,
+                'gzip compression_opts must be between 0 and 9'
+        end
+
         validate_filter_available(1, 'gzip', capability: 1) if compression == :gzip
         validate_filter_available(2, 'shuffle', capability: 1) if shuffle
         validate_filter_available(3, 'Fletcher32', capability: 1) if fletcher32
@@ -109,9 +146,12 @@ module HDF5
           check_property_status(HDF5::FFI.H5Pset_chunk(dcpl_id, chunk_shape.length, dims), 'set chunk dimensions')
         end
         check_property_status(HDF5::FFI.H5Pset_shuffle(dcpl_id), 'enable shuffle') if shuffle
-        check_property_status(HDF5::FFI.H5Pset_deflate(dcpl_id, compression_level), 'enable gzip') if compression == :gzip
+        if compression == :gzip
+          check_property_status(HDF5::FFI.H5Pset_deflate(dcpl_id, compression_level),
+                                'enable gzip')
+        end
         check_property_status(HDF5::FFI.H5Pset_fletcher32(dcpl_id), 'enable Fletcher32') if fletcher32
-        if !fillvalue.nil?
+        unless fillvalue.nil?
           value = dtype_object.numo_class.cast(fillvalue)
           raise HDF5::Error, 'fillvalue must be scalar' unless value.shape.empty?
 
@@ -137,8 +177,13 @@ module HDF5
       end
 
       def validate_chunk_shape(chunks, shape)
-        raise HDF5::Error, 'chunks must be an Array matching dataset rank' unless chunks.is_a?(Array) && chunks.length == shape.length
-        raise HDF5::Error, 'chunk dimensions must be positive integers' unless chunks.all? { |dimension| dimension.is_a?(Integer) && dimension.positive? }
+        unless chunks.is_a?(Array) && chunks.length == shape.length
+          raise HDF5::Error,
+                'chunks must be an Array matching dataset rank'
+        end
+        unless chunks.all? { |dimension| dimension.is_a?(Integer) && dimension.positive? }
+          raise HDF5::Error, 'chunk dimensions must be positive integers'
+        end
 
         chunks
       end
@@ -148,7 +193,9 @@ module HDF5
       end
 
       def validate_filter_available(filter_id, name, capability:)
-        raise UnsupportedFeatureError, "HDF5 #{name} filter is unavailable" unless HDF5::FFI.H5Zfilter_avail(filter_id).positive?
+        unless HDF5::FFI.H5Zfilter_avail(filter_id).positive?
+          raise UnsupportedFeatureError, "HDF5 #{name} filter is unavailable"
+        end
 
         flags = ::FFI::MemoryPointer.new(:uint)
         status = HDF5::FFI.H5Zget_filter_info(filter_id, flags)
@@ -179,8 +226,11 @@ module HDF5
       normalized_selection = Selection.normalize(selection, shape)
       values = if data.is_a?(Numeric)
                  target_dtype = dtype
-                 normalized_selection.scalar? ? target_dtype.numo_class.cast(data) :
+                 if normalized_selection.scalar?
+                   target_dtype.numo_class.cast(data)
+                 else
                    target_dtype.numo_class.ones(*normalized_selection.result_shape) * data
+                 end
                else
                  HDF5::DataHelpers.normalize_data(data, label: 'Dataset data')
                end
@@ -309,8 +359,13 @@ module HDF5
     def resize(new_shape)
       ensure_open!
       raise HDF5::Error, 'Cannot resize a Null dataset' if shape.nil?
-      raise HDF5::Error, 'Dataset shape must be an Array matching dataset rank' unless new_shape.is_a?(Array) && new_shape.length == shape.length
-      raise HDF5::Error, 'Dataset dimensions must be non-negative integers' unless new_shape.all? { |dimension| dimension.is_a?(Integer) && dimension >= 0 }
+      unless new_shape.is_a?(Array) && new_shape.length == shape.length
+        raise HDF5::Error,
+              'Dataset shape must be an Array matching dataset rank'
+      end
+      unless new_shape.all? { |dimension| dimension.is_a?(Integer) && dimension >= 0 }
+        raise HDF5::Error, 'Dataset dimensions must be non-negative integers'
+      end
 
       maxshape.zip(new_shape).each do |maximum, dimension|
         raise HDF5::Error, 'Dataset shape exceeds maxshape' if maximum && dimension > maximum
@@ -330,10 +385,12 @@ module HDF5
       current_shape = shape
       raise HDF5::Error, 'Cannot append to a Null dataset' if current_shape.nil?
       raise HDF5::Error, 'Cannot append to a scalar dataset' if current_shape.empty?
-      raise IndexError, "Invalid append axis: #{axis}" unless axis.is_a?(Integer) && axis.between?(0, current_shape.length - 1)
+      raise IndexError, "Invalid append axis: #{axis}" unless axis.is_a?(Integer) && axis.between?(0,
+                                                                                                   current_shape.length - 1)
       raise HDF5::Error, 'Appended data rank must match dataset rank' unless values.shape.length == current_shape.length
       raise HDF5::Error, 'Appended data shape must match all non-appended dimensions' unless
         values.shape.each_with_index.all? { |dimension, index| index == axis || dimension == current_shape[index] }
+
       source_dtype = DType.for_numo(values)
       target_dtype = dtype
       raise ConversionError, "Cannot safely cast #{source_dtype.to_sym} to #{target_dtype.to_sym}" unless
@@ -348,31 +405,36 @@ module HDF5
       end
       write(values, selection: selection)
       self
-    rescue StandardError => error
+    rescue StandardError => e
       raise unless current_shape && new_shape && shape == new_shape
 
       begin
         resize(current_shape)
       rescue StandardError => rollback_error
         raise HDF5::Error,
-              "Append failed (#{error.message}) and extent rollback failed (#{rollback_error.message}); current shape: #{shape.inspect}"
+              "Append failed (#{e.message}) and extent rollback failed (#{rollback_error.message}); current shape: #{shape.inspect}"
       end
-      raise error
+      raise e
     end
 
     def read(selection: nil, dtype: nil, casting: :safe)
       ensure_open!
       type_id = HDF5::FFI.H5Dget_type(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
-      raise ConversionError, 'dtype is not supported for string datasets' if dtype && HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+      if dtype && HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+        raise ConversionError,
+              'dtype is not supported for string datasets'
+      end
       return read_string(type_id, selection:) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
 
       source_dtype = DType.for_hdf5(type_id)
       current_dtype = dtype ? DType.for_symbol(dtype) : source_dtype
       raise ConversionError, "Cannot safely cast #{source_dtype.to_sym} to #{current_dtype.to_sym}" unless
         source_dtype.castable_to?(current_dtype, casting:)
+
       current_shape = shape
       return HDF5::Empty.new(current_dtype) if current_shape.nil?
+
       normalized_selection = Selection.normalize(selection, current_shape)
       return current_dtype.numo_class.zeros(*normalized_selection.result_shape) if normalized_selection.size.zero?
 
@@ -391,7 +453,8 @@ module HDF5
                                  HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to read dataset' if status < 0
 
-      result = HDF5::DataHelpers.from_binary(current_dtype, buffer.read_bytes(bytesize), normalized_selection.result_shape)
+      result = HDF5::DataHelpers.from_binary(current_dtype, buffer.read_bytes(bytesize),
+                                             normalized_selection.result_shape)
       return result unless normalized_selection.scalar?
 
       scalar = result.extract
@@ -423,13 +486,17 @@ module HDF5
       raise HDF5::Error, 'read_into destination must be a Numo::NArray' unless destination.is_a?(Numo::NArray)
 
       values = read(selection:, dtype: DType.for_numo(destination).to_sym, casting:)
-      raise HDF5::Error, 'read_into destination shape must match selection shape' unless destination.shape == values.shape
+      unless destination.shape == values.shape
+        raise HDF5::Error,
+              'read_into destination shape must match selection shape'
+      end
 
       destination.store(values)
     end
 
     def each_block(max_bytes:)
       return enum_for(__method__, max_bytes:) unless block_given?
+
       ensure_open!
       raise ArgumentError, 'max_bytes must be a positive integer' unless max_bytes.is_a?(Integer) && max_bytes.positive?
 
@@ -451,6 +518,7 @@ module HDF5
 
     def each_chunk
       return enum_for(__method__) unless block_given?
+
       ensure_open!
 
       chunk_shape = chunks
@@ -469,12 +537,18 @@ module HDF5
     def write_string(data, selection:)
       normalized_selection = Selection.normalize(selection, shape)
       values, values_shape = HDF5::StringCodec.normalize_data(data)
-      raise HDF5::ShapeError, 'Dataset shape must match string data shape' unless values_shape == normalized_selection.result_shape
+      unless values_shape == normalized_selection.result_shape
+        raise HDF5::ShapeError,
+              'Dataset shape must match string data shape'
+      end
       return data if normalized_selection.size.zero?
 
       type_id = HDF5::FFI.H5Dget_type(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
-      raise UnsupportedTypeError, 'Fixed-length string datasets are not yet supported' unless HDF5::StringCodec.variable?(type_id)
+      unless HDF5::StringCodec.variable?(type_id)
+        raise UnsupportedTypeError, 'Fixed-length string datasets are not yet supported'
+      end
+
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
       select_hyperslab(file_space_id, normalized_selection)
       memory_space_id = create_memory_dataspace(normalized_selection.result_shape)
@@ -492,7 +566,9 @@ module HDF5
 
     def read_string(type_id, selection:)
       normalized_selection = Selection.normalize(selection, shape)
-      raise UnsupportedTypeError, 'Fixed-length string datasets are not yet supported' unless HDF5::StringCodec.variable?(type_id)
+      unless HDF5::StringCodec.variable?(type_id)
+        raise UnsupportedTypeError, 'Fixed-length string datasets are not yet supported'
+      end
       return Numo::RObject.new(*normalized_selection.result_shape) if normalized_selection.size.zero?
 
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
@@ -508,7 +584,10 @@ module HDF5
       if buffer && type_id && memory_space_id
         active_error = $ERROR_INFO
         reclaim_status = HDF5::FFI.H5Dvlen_reclaim(type_id, memory_space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer)
-        raise HDF5::Error, 'Failed to reclaim variable-length string data' if reclaim_status.negative? && active_error.nil?
+        if reclaim_status.negative? && active_error.nil?
+          raise HDF5::Error,
+                'Failed to reclaim variable-length string data'
+        end
       end
       HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
       HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0

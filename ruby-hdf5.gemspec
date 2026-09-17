@@ -18,8 +18,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'ffi'
-  spec.add_dependency 'pkg-config'
   spec.add_dependency 'numo-narray-alt'
+  spec.add_dependency 'pkg-config'
 
   spec.metadata['msys2_mingw_dependencies'] = 'hdf5'
 end

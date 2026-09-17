@@ -43,9 +43,11 @@ module HDF5
         when 'r+'
           [HDF5::FFI.H5Fopen(filename, H5F_ACC_RDWR, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_RDWR]
         when 'w'
-          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_TRUNC, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_TRUNC]
+          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_TRUNC, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST),
+           H5F_ACC_TRUNC]
         when 'x'
-          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_EXCL, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), H5F_ACC_EXCL]
+          [HDF5::FFI.H5Fcreate(filename, H5F_ACC_EXCL, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST),
+           H5F_ACC_EXCL]
         when 'a'
           file_id = HDF5::FFI.H5Fcreate(filename, H5F_ACC_EXCL, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST)
           file_id = HDF5::FFI.H5Fopen(filename, H5F_ACC_RDWR, HDF5::DEFAULT_PROPERTY_LIST) if file_id < 0

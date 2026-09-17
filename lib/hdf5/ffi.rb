@@ -77,8 +77,11 @@ module HDF5
       H5Pset_fill_value H5Pget_fill_value H5Zfilter_avail H5Zget_filter_info
       H5Lexists H5Ldelete H5Lmove H5Lcreate_hard H5Lcreate_soft H5Lget_val H5Dvlen_reclaim
     ].freeze
-    version_functions = MiV == 10 ? %i[H5Literate H5Lget_info H5Oget_info_by_name] :
-      %i[H5Literate2 H5Lget_info2 H5Oget_info_by_name1]
+    version_functions = if MiV == 10
+                          %i[H5Literate H5Lget_info H5Oget_info_by_name]
+                        else
+                          %i[H5Literate2 H5Lget_info2 H5Oget_info_by_name1]
+                        end
     missing = (REQUIRED_FUNCTIONS + version_functions).reject { |name| respond_to?(name) }
     raise LoadError, "Loaded HDF5 library is missing required APIs: #{missing.join(', ')}" unless missing.empty?
 

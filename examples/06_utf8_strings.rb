@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'fileutils'
 require 'hdf5'
 
@@ -7,7 +9,7 @@ path = File.join(output_dir, '06_utf8_strings.h5')
 
 HDF5::File.open(path, 'w') do |file|
   file.create_dataset('greeting', 'hello, Ruby')
-  labels = file.create_dataset('labels', [['alpha', '日本語'], ['gamma', 'delta']])
+  labels = file.create_dataset('labels', [%w[alpha 日本語], %w[gamma delta]])
   labels.attrs['language'] = 'UTF-8'
 end
 
