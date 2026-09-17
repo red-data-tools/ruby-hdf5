@@ -6,7 +6,7 @@
 <title>
   Module: HDF5::FFI
   
-    &mdash; Documentation by YARD 0.9.44
+    &mdash; Documentation by YARD 0.9.45
   
 </title>
 
@@ -111,6 +111,29 @@
     </h2>
 
     <dl class="constants">
+      
+        <dt id="REQUIRED_FUNCTIONS-constant" class="">REQUIRED_FUNCTIONS =
+          
+        </dt>
+        <dd><pre class="code"><span class='qsymbols_beg'>%i[</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Fopen</span><span class='words_sep'> </span><span class='tstring_content'>H5Fcreate</span><span class='words_sep'> </span><span class='tstring_content'>H5Fclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Fflush</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Gopen2</span><span class='words_sep'> </span><span class='tstring_content'>H5Gcreate2</span><span class='words_sep'> </span><span class='tstring_content'>H5Gclose</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Dopen2</span><span class='words_sep'> </span><span class='tstring_content'>H5Dcreate2</span><span class='words_sep'> </span><span class='tstring_content'>H5Dclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Dread</span><span class='words_sep'> </span><span class='tstring_content'>H5Dwrite</span><span class='words_sep'> </span><span class='tstring_content'>H5Dget_type</span><span class='words_sep'> </span><span class='tstring_content'>H5Dget_space</span><span class='words_sep'> </span><span class='tstring_content'>H5Dset_extent</span><span class='words_sep'> </span><span class='tstring_content'>H5Dget_create_plist</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Aopen</span><span class='words_sep'> </span><span class='tstring_content'>H5Acreate2</span><span class='words_sep'> </span><span class='tstring_content'>H5Aclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Aread</span><span class='words_sep'> </span><span class='tstring_content'>H5Awrite</span><span class='words_sep'> </span><span class='tstring_content'>H5Aexists</span><span class='words_sep'> </span><span class='tstring_content'>H5Adelete</span><span class='words_sep'> </span><span class='tstring_content'>H5Aiterate2</span><span class='words_sep'> </span><span class='tstring_content'>H5Aget_type</span><span class='words_sep'> </span><span class='tstring_content'>H5Aget_space</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Screate</span><span class='words_sep'> </span><span class='tstring_content'>H5Screate_simple</span><span class='words_sep'> </span><span class='tstring_content'>H5Sclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Sget_simple_extent_type</span><span class='words_sep'> </span><span class='tstring_content'>H5Sget_simple_extent_ndims</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Sget_simple_extent_dims</span><span class='words_sep'> </span><span class='tstring_content'>H5Sselect_hyperslab</span><span class='words_sep'> </span><span class='tstring_content'>H5Sget_select_npoints</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Tcopy</span><span class='words_sep'> </span><span class='tstring_content'>H5Tclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_class</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_size</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_sign</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_order</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_precision</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_offset</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Tset_size</span><span class='words_sep'> </span><span class='tstring_content'>H5Tset_cset</span><span class='words_sep'> </span><span class='tstring_content'>H5Tis_variable_str</span><span class='words_sep'> </span><span class='tstring_content'>H5Tcreate</span><span class='words_sep'> </span><span class='tstring_content'>H5Tinsert</span><span class='words_sep'> </span><span class='tstring_content'>H5Tenum_create</span><span class='words_sep'> </span><span class='tstring_content'>H5Tenum_insert</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Tenum_valueof</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_nmembers</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_member_index</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_member_offset</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_member_type</span><span class='words_sep'> </span><span class='tstring_content'>H5Tget_super</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Pcreate</span><span class='words_sep'> </span><span class='tstring_content'>H5Pclose</span><span class='words_sep'> </span><span class='tstring_content'>H5Pset_chunk</span><span class='words_sep'> </span><span class='tstring_content'>H5Pget_chunk</span><span class='words_sep'> </span><span class='tstring_content'>H5Pget_layout</span><span class='words_sep'> </span><span class='tstring_content'>H5Pset_deflate</span><span class='words_sep'> </span><span class='tstring_content'>H5Pset_shuffle</span><span class='words_sep'> </span><span class='tstring_content'>H5Pset_fletcher32</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Pset_fill_value</span><span class='words_sep'> </span><span class='tstring_content'>H5Pget_fill_value</span><span class='words_sep'> </span><span class='tstring_content'>H5Zfilter_avail</span><span class='words_sep'> </span><span class='tstring_content'>H5Zget_filter_info</span><span class='words_sep'>
+</span><span class='words_sep'>  </span><span class='tstring_content'>H5Lexists</span><span class='words_sep'> </span><span class='tstring_content'>H5Ldelete</span><span class='words_sep'> </span><span class='tstring_content'>H5Lmove</span><span class='words_sep'> </span><span class='tstring_content'>H5Lcreate_hard</span><span class='words_sep'> </span><span class='tstring_content'>H5Lcreate_soft</span><span class='words_sep'> </span><span class='tstring_content'>H5Lget_val</span><span class='words_sep'> </span><span class='tstring_content'>H5Dvlen_reclaim</span><span class='words_sep'>
+</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="CALL_LOCK-constant" class="">CALL_LOCK =
+          
+        </dt>
+        <dd><pre class="code"><span class='const'>Monitor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span></pre></dd>
       
         <dt id="MiV-constant" class="">MiV =
           
@@ -22116,12 +22139,12 @@
       <pre class="lines">
 
 
-6
-7
-8</pre>
+8
+9
+10</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 6</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 8</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_backend'>backend</span>
   <span class='ivar'>@backend</span>
@@ -22440,14 +22463,14 @@
       <pre class="lines">
 
 
-19
-20
 21
 22
-23</pre>
+23
+24
+25</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 19</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_attach_function'>attach_function</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span>
   <span class='kw'>super</span>
@@ -22474,14 +22497,14 @@
       <pre class="lines">
 
 
-25
-26
 27
 28
-29</pre>
+29
+30
+31</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 25</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 27</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_attach_variable'>attach_variable</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span>
   <span class='kw'>super</span>
@@ -39296,14 +39319,14 @@ pointer
       <pre class="lines">
 
 
-31
-32
 33
 34
-35</pre>
+35
+36
+37</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/hdf5/ffi.rb', line 33</span>
 
 <span class='id identifier rubyid_attach_function'>attach_function</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>H5get_libversion</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='qsymbols_beg'>%i[</span><span class='words_sep'>
 </span><span class='words_sep'>  </span><span class='tstring_content'>pointer</span><span class='words_sep'>
@@ -80289,9 +80312,9 @@ FILE.ptr,
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 22 03:13:31 2026 by
+  Generated on Thu Sep 17 04:03:24 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.44 (ruby-4.0.5).
+  0.9.45 (ruby-4.0.7).
 </div>
 
     </div>
