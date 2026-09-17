@@ -13,22 +13,22 @@ module HDF5
 
       size = HDF5::FFI.H5Sget_simple_extent_npoints(space_id)
 
-      buffer = \
-        case HDF5::FFI.H5Tget_class(type_id)
-        when :H5T_INTEGER
-          ::FFI::MemoryPointer.new(:int, size)
-        when :H5T_FLOAT
-          ::FFI::MemoryPointer.new(:double, size)
-        when :H5T_STRING
-          ::FFI::MemoryPointer.new(:pointer, size)
-        else
-          raise HDF5::Error, 'Unsupported data type'
-        end
+      type_class = HDF5::FFI.H5Tget_class(type_id)
+      buffer, memory_type_id = case type_class
+                               when :H5T_INTEGER
+                                 [::FFI::MemoryPointer.new(:int, size), HDF5::FFI.H5T_NATIVE_INT]
+                               when :H5T_FLOAT
+                                 [::FFI::MemoryPointer.new(:double, size), HDF5::FFI.H5T_NATIVE_DOUBLE]
+                               when :H5T_STRING
+                                 [::FFI::MemoryPointer.new(:pointer, size), type_id]
+                               else
+                                 raise HDF5::Error, 'Unsupported data type'
+                               end
 
-      status = HDF5::FFI.H5Aread(@attr_id, type_id, buffer)
+      status = HDF5::FFI.H5Aread(@attr_id, memory_type_id, buffer)
       raise HDF5::Error, 'Failed to read attribute' if status < 0
 
-      case HDF5::FFI.H5Tget_class(type_id)
+      case type_class
       when :H5T_INTEGER
         buffer.read_array_of_int(size)
       when :H5T_FLOAT

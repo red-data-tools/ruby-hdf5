@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ffi'
+require 'numo/narray/alt'
 require_relative 'hdf5/version'
 
 module HDF5
@@ -37,6 +38,7 @@ end
 
 require_relative 'hdf5/ffi'
 
+require_relative 'hdf5/dtype'
 require_relative 'hdf5/file'
 require_relative 'hdf5/group'
 require_relative 'hdf5/dataset'

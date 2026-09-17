@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'ffi'
   spec.add_dependency 'pkg-config'
+  spec.add_dependency 'numo-narray-alt'
 
   spec.metadata['msys2_mingw_dependencies'] = 'hdf5'
 end

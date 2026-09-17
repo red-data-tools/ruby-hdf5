@@ -27,12 +27,12 @@ class HDF5Test < Test::Unit::TestCase
     assert_equal(%w[bar_float bar_int], g.list_datasets)
     d = g['bar_float']
     assert_equal([10], d.shape)
-    assert_equal(:H5T_FLOAT, d.dtype)
-    assert_equal([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0], d.read)
+    assert_equal(:float64, d.dtype.to_sym)
+    assert_equal(Numo::DFloat[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0], d.read)
     d = g['bar_int']
     assert_equal([10], d.shape)
-    assert_equal(:H5T_INTEGER, d.dtype)
-    assert_equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], d.read)
+    assert_equal(:int64, d.dtype.to_sym)
+    assert_equal(Numo::Int64[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], d.read)
   end
 
   test 'create group and integer dataset' do
@@ -49,8 +49,8 @@ class HDF5Test < Test::Unit::TestCase
       assert_equal(%w[numbers], reopened.list_entries)
       loaded = reopened['numbers']['ints']
       assert_equal([4], loaded.shape)
-      assert_equal(:H5T_INTEGER, loaded.dtype)
-      assert_equal([1, 2, 3, 4], loaded.read)
+      assert_equal(:int64, loaded.dtype.to_sym)
+      assert_equal(Numo::Int64[1, 2, 3, 4], loaded.read)
       loaded.close
       reopened.close
     end
@@ -67,42 +67,49 @@ class HDF5Test < Test::Unit::TestCase
       reopened = HDF5::File.open(path)
       loaded = reopened['values']
       assert_equal([3], loaded.shape)
-      assert_equal(:H5T_FLOAT, loaded.dtype)
-      assert_equal([1.5, 2.5, 3.5], loaded.read)
+      assert_equal(:float64, loaded.dtype.to_sym)
+      assert_equal(Numo::DFloat[1.5, 2.5, 3.5], loaded.read)
       loaded.close
       reopened.close
     end
   end
 
-  test 'rejects integer values outside native int range on create' do
-    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
-    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
-
+  test 'preserves multidimensional Numo data' do
     Dir.mktmpdir do |dir|
-      path = File.join(dir, 'overflow-create.h5')
+      path = File.join(dir, 'matrix.h5')
+      matrix = Numo::SFloat[[1.5, 2.5], [3.5, 4.5]]
 
       HDF5::File.create(path) do |file|
-        error = assert_raise(HDF5::Error) do
-          file.create_dataset('too_large', [max + 1])
-        end
-        assert_include(error.message, "#{min}..#{max}")
+        file.create_dataset('matrix', matrix)
+      end
+
+      HDF5::File.open(path) do |file|
+        dataset = file['matrix']
+        assert_equal([2, 2], dataset.shape)
+        assert_equal(:float32, dataset.dtype.to_sym)
+        assert_equal(matrix, dataset.read)
       end
     end
   end
 
-  test 'rejects integer values outside native int range on write' do
-    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
-    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
-
+  test 'preserves int64 values on create' do
     Dir.mktmpdir do |dir|
-      path = File.join(dir, 'overflow-write.h5')
+      path = File.join(dir, 'int64-create.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('large', [1 << 40])
+        assert_equal(Numo::Int64[1 << 40], dataset.read)
+      end
+    end
+  end
+
+  test 'rejects writes with a mismatched shape' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'shape-write.h5')
 
       HDF5::File.create(path) do |file|
         dataset = file.create_dataset('ints', [1, 2, 3])
-        error = assert_raise(HDF5::Error) do
-          dataset.write([min - 1])
-        end
-        assert_include(error.message, "#{min}..#{max}")
+        assert_raise(HDF5::Error) { dataset.write([1]) }
       end
     end
   end
@@ -118,7 +125,7 @@ class HDF5Test < Test::Unit::TestCase
       end
 
       HDF5::File.open(path) do |file|
-        assert_equal([10, 20, 30], file['values']['ints'].read)
+        assert_equal(Numo::Int64[10, 20, 30], file['values']['ints'].read)
       end
     end
   end

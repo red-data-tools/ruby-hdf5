@@ -4,69 +4,48 @@ module HDF5
       module_function
 
       def normalize_data(data)
-        values = data.is_a?(Array) ? data : [data]
+        return data if data.is_a?(Numo::NArray) && DType.for_numo(data)
+
+        values = data.is_a?(Array) ? data.flatten : [data]
         raise HDF5::Error, 'Dataset data must not be empty' if values.empty?
-        raise HDF5::Error, 'Nested arrays are not supported' if values.any? { |value| value.is_a?(Array) }
 
-        values
+        dtype = if values.all? { |value| value.is_a?(Integer) }
+                  DType.for_symbol(:int64)
+                elsif values.all? { |value| value.is_a?(Numeric) }
+                  DType.for_symbol(:float64)
+                else
+                  raise HDF5::Error, 'Only numeric dataset data is supported'
+                end
+        dtype.numo_class.cast(data)
       end
 
-      def datatype_id_for(data)
-        if data.all? { |value| value.is_a?(Integer) }
-          validate_native_int_range!(data)
-          HDF5::FFI.H5T_NATIVE_INT
-        elsif data.all? { |value| value.is_a?(Numeric) }
-          HDF5::FFI.H5T_NATIVE_DOUBLE
-        else
-          raise HDF5::Error, 'Only numeric dataset data is supported'
-        end
-      end
+      def buffer_for(narray)
+        binary = narray.to_binary
+        expected_bytes = narray.size * DType.for_numo(narray).itemsize
+        raise HDF5::Error, 'Numo binary representation has an unexpected size' unless binary.bytesize == expected_bytes
 
-      def buffer_for(data)
-        if data.all? { |value| value.is_a?(Integer) }
-          buffer = ::FFI::MemoryPointer.new(:int, data.length)
-          buffer.write_array_of_int(data)
-        else
-          buffer = ::FFI::MemoryPointer.new(:double, data.length)
-          buffer.write_array_of_double(data.map(&:to_f))
-        end
-
-        buffer
-      end
-
-      def native_int_bounds
-        bits = ::FFI.type_size(:int) * 8
-        max = (1 << (bits - 1)) - 1
-        min = -(1 << (bits - 1))
-        [min, max]
-      end
-
-      def validate_native_int_range!(values)
-        min, max = native_int_bounds
-        out_of_range = values.find { |value| value < min || value > max }
-        return unless out_of_range
-
-        raise HDF5::Error,
-              "Integer value #{out_of_range} is outside native int range (#{min}..#{max}). Use a smaller value."
+        ::FFI::MemoryPointer.new(:char, expected_bytes).tap { |buffer| buffer.put_bytes(0, binary) }
       end
     end
 
     private_constant :DataHelpers
 
     class << self
-      def create(parent_id, name, data)
-        values = DataHelpers.normalize_data(data)
-        dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
-        dims.write_array_of_ulong_long([values.length])
-        datatype_id = DataHelpers.datatype_id_for(values)
-        dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
+      def create(parent_id, name, data = nil, shape: nil, dtype: nil)
+        narray = DataHelpers.normalize_data(data) unless data.nil?
+        dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)
+        shape ||= narray.shape
+        raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
+        raise HDF5::Error, 'Dataset shape must match data shape' if narray && shape != narray.shape
+
+        dataspace_id = create_dataspace(shape)
         raise HDF5::Error, "Failed to create dataspace for dataset: #{name}" if dataspace_id < 0
 
         dataset = from_id(
-          HDF5::FFI.H5Dcreate2(parent_id, name, datatype_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
+          HDF5::FFI.H5Dcreate2(parent_id, name, dtype_object.storage_type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
                                HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
         )
-        dataset.write(values)
+        dataset.write(narray) if narray
         return dataset unless block_given?
 
         begin
@@ -91,6 +70,14 @@ module HDF5
 
       private
 
+      def create_dataspace(shape)
+        return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
+
+        dims = ::FFI::MemoryPointer.new(:ulong_long, shape.length)
+        dims.write_array_of_ulong_long(shape)
+        HDF5::FFI.H5Screate_simple(shape.length, dims, nil)
+      end
+
       def from_id(dataset_id, name)
         dataset = allocate
         dataset.send(:initialize_from_id, dataset_id, name)
@@ -108,9 +95,11 @@ module HDF5
 
     def write(data)
       values = DataHelpers.normalize_data(data)
-      mem_type_id = DataHelpers.datatype_id_for(values)
+      raise HDF5::Error, 'Dataset shape must match data shape' unless values.shape == shape
+
+      dtype_object = DType.for_numo(values)
       buffer = DataHelpers.buffer_for(values)
-      status = HDF5::FFI.H5Dwrite(@dataset_id, mem_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
+      status = HDF5::FFI.H5Dwrite(@dataset_id, dtype_object.memory_type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
                                   HDF5::DEFAULT_PROPERTY_LIST, buffer)
       raise HDF5::Error, 'Failed to write dataset' if status < 0
 
@@ -128,7 +117,7 @@ module HDF5
       datatype_id = HDF5::FFI.H5Dget_type(@dataset_id)
       raise HDF5::Error, 'Failed to get datatype' if datatype_id < 0
 
-      HDF5::FFI.H5Tget_class(datatype_id)
+      DType.for_hdf5(datatype_id)
     ensure
       HDF5::FFI.H5Tclose(datatype_id) if datatype_id && datatype_id >= 0
     end
@@ -151,40 +140,17 @@ module HDF5
     def read
       current_dtype = dtype
       current_shape = shape
+      total_elements = current_shape.empty? ? 1 : current_shape.inject(:*)
+      return current_dtype.numo_class.zeros(*current_shape) if total_elements.zero?
 
-      total_elements = current_shape.inject(:*)
-      case current_dtype
-      when :H5T_INTEGER
-        read_integer_data(total_elements)
-      when :H5T_FLOAT
-        read_float_data(total_elements)
-      when :H5T_STRING
-        read_string_data(total_elements)
-      else
-        raise HDF5::Error, 'Unsupported datatype'
-      end
-    end
-
-    def read_integer_data(total_elements)
-      buffer = ::FFI::MemoryPointer.new(:int, total_elements)
-      status = HDF5::FFI.H5Dread(@dataset_id, HDF5::FFI.H5T_NATIVE_INT, HDF5::DEFAULT_PROPERTY_LIST,
+      bytesize = total_elements * current_dtype.itemsize
+      buffer = ::FFI::MemoryPointer.new(:char, bytesize)
+      status = HDF5::FFI.H5Dread(@dataset_id, current_dtype.memory_type_id, HDF5::DEFAULT_PROPERTY_LIST,
                                  HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST, buffer)
-      raise HDF5::Error, 'Failed to read integer dataset' if status < 0
+      raise HDF5::Error, 'Failed to read dataset' if status < 0
 
-      buffer.read_array_of_int(total_elements)
-    end
-
-    def read_float_data(total_elements)
-      buffer = ::FFI::MemoryPointer.new(:double, total_elements)
-      status = HDF5::FFI.H5Dread(@dataset_id, HDF5::FFI.H5T_NATIVE_DOUBLE, HDF5::DEFAULT_PROPERTY_LIST,
-                                 HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST, buffer)
-      raise HDF5::Error, 'Failed to read float dataset' if status < 0
-
-      buffer.read_array_of_double(total_elements)
-    end
-
-    def read_string_data(_total_elements)
-      raise HDF5::Error, 'String dataset reading is not supported yet'
+      result = current_dtype.numo_class.from_binary(buffer.read_bytes(bytesize), current_shape)
+      current_shape.empty? ? result.extract : result
     end
 
     private
