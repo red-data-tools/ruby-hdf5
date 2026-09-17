@@ -273,7 +273,7 @@ class HDF5Test < Test::Unit::TestCase
       end
 
       HDF5::File.open(path) do |file|
-        assert_equal([42], file['values'].attrs['scale'])
+        assert_equal(42, file['values'].attrs['scale'])
       end
     end
   end
@@ -289,24 +289,21 @@ class HDF5Test < Test::Unit::TestCase
       end
 
       HDF5::File.open(path) do |file|
-        assert_equal([100], file['values'].attrs['scale'])
+        assert_equal(100, file['values'].attrs['scale'])
       end
     end
   end
 
-  test 'rejects integer values outside native int range on attribute write' do
-    min = -(1 << (::FFI.type_size(:int) * 8 - 1))
-    max = (1 << (::FFI.type_size(:int) * 8 - 1)) - 1
-
+  test 'preserves int64 and multidimensional Numo attributes' do
     Dir.mktmpdir do |dir|
-      path = File.join(dir, 'attribute-overflow.h5')
+      path = File.join(dir, 'attribute-numo.h5')
 
       HDF5::File.create(path) do |file|
         dataset = file.create_dataset('values', [1, 2, 3])
-        error = assert_raise(HDF5::Error) do
-          dataset.attrs['scale'] = [max + 1]
-        end
-        assert_include(error.message, "#{min}..#{max}")
+        dataset.attrs['large'] = 1 << 40
+        dataset.attrs['matrix'] = Numo::SFloat[[1.5, 2.5], [3.5, 4.5]]
+        assert_equal(1 << 40, dataset.attrs['large'])
+        assert_equal(Numo::SFloat[[1.5, 2.5], [3.5, 4.5]], dataset.attrs['matrix'])
       end
     end
   end

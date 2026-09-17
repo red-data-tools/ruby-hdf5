@@ -9,35 +9,19 @@ module HDF5
 
     def read
       type_id = HDF5::FFI.H5Aget_type(@attr_id)
+      raise HDF5::Error, 'Failed to get attribute datatype' if type_id < 0
       space_id = HDF5::FFI.H5Aget_space(@attr_id)
+      raise HDF5::Error, 'Failed to get attribute dataspace' if space_id < 0
 
-      size = HDF5::FFI.H5Sget_simple_extent_npoints(space_id)
-
-      type_class = HDF5::FFI.H5Tget_class(type_id)
-      buffer, memory_type_id = case type_class
-                               when :H5T_INTEGER
-                                 [::FFI::MemoryPointer.new(:int, size), HDF5::FFI.H5T_NATIVE_INT]
-                               when :H5T_FLOAT
-                                 [::FFI::MemoryPointer.new(:double, size), HDF5::FFI.H5T_NATIVE_DOUBLE]
-                               when :H5T_STRING
-                                 [::FFI::MemoryPointer.new(:pointer, size), type_id]
-                               else
-                                 raise HDF5::Error, 'Unsupported data type'
-                               end
-
-      status = HDF5::FFI.H5Aread(@attr_id, memory_type_id, buffer)
+      dtype_object = DType.for_hdf5(type_id)
+      attribute_shape = shape(space_id)
+      size = attribute_shape.empty? ? 1 : attribute_shape.inject(:*)
+      buffer = ::FFI::MemoryPointer.new(:char, size * dtype_object.itemsize)
+      status = HDF5::FFI.H5Aread(@attr_id, dtype_object.memory_type_id, buffer)
       raise HDF5::Error, 'Failed to read attribute' if status < 0
 
-      case type_class
-      when :H5T_INTEGER
-        buffer.read_array_of_int(size)
-      when :H5T_FLOAT
-        buffer.read_array_of_double(size)
-      when :H5T_STRING
-        buffer.read_pointer.read_string
-      else
-        raise HDF5::Error, 'Unsupported data type'
-      end
+      result = dtype_object.numo_class.from_binary(buffer.read_bytes(size * dtype_object.itemsize), attribute_shape)
+      attribute_shape.empty? ? result.extract : result
     ensure
       HDF5::FFI.H5Tclose(type_id) if type_id && type_id >= 0
       HDF5::FFI.H5Sclose(space_id) if space_id && space_id >= 0
@@ -48,6 +32,20 @@ module HDF5
 
       HDF5::FFI.H5Aclose(@attr_id)
       @attr_id = nil
+    end
+
+    private
+
+    def shape(space_id)
+      rank = HDF5::FFI.H5Sget_simple_extent_ndims(space_id)
+      raise HDF5::Error, 'Failed to get attribute rank' if rank < 0
+      return [] if rank.zero?
+
+      dimensions = ::FFI::MemoryPointer.new(:ulong_long, rank)
+      status = HDF5::FFI.H5Sget_simple_extent_dims(space_id, dimensions, nil)
+      raise HDF5::Error, 'Failed to get attribute shape' if status < 0
+
+      dimensions.read_array_of_uint64(rank)
     end
   end
 
@@ -68,8 +66,8 @@ module HDF5
     end
 
     def write(attr_name, value)
-      values = normalize_data(value)
-      datatype_id = datatype_id_for(values)
+      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data')
+      dtype_object = DType.for_numo(values)
 
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
       raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
@@ -79,23 +77,21 @@ module HDF5
         raise HDF5::Error, "Failed to replace attribute: #{attr_name}" if status < 0
       end
 
-      dims = ::FFI::MemoryPointer.new(:ulong_long, 1)
-      dims.write_array_of_ulong_long([values.length])
-      dataspace_id = HDF5::FFI.H5Screate_simple(1, dims, nil)
+      dataspace_id = create_dataspace(values.shape)
       raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
 
       attr_id = HDF5::FFI.H5Acreate2(
         @dataset_id,
         attr_name,
-        datatype_id,
+        dtype_object.storage_type_id,
         dataspace_id,
         HDF5::DEFAULT_PROPERTY_LIST,
         HDF5::DEFAULT_PROPERTY_LIST
       )
       raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
 
-      buffer = buffer_for(values)
-      status = HDF5::FFI.H5Awrite(attr_id, datatype_id, buffer)
+      buffer = HDF5::DataHelpers.buffer_for(values)
+      status = HDF5::FFI.H5Awrite(attr_id, dtype_object.memory_type_id, buffer)
       raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
 
       value
@@ -106,51 +102,12 @@ module HDF5
 
     private
 
-    def normalize_data(value)
-      values = value.is_a?(Array) ? value : [value]
-      raise HDF5::Error, 'Attribute data must not be empty' if values.empty?
-      raise HDF5::Error, 'Nested arrays are not supported for attributes' if values.any? { |item| item.is_a?(Array) }
+    def create_dataspace(shape)
+      return HDF5::FFI.H5Screate(:H5S_SCALAR) if shape.empty?
 
-      values
-    end
-
-    def datatype_id_for(values)
-      if values.all? { |item| item.is_a?(Integer) }
-        validate_native_int_range!(values)
-        HDF5::FFI.H5T_NATIVE_INT
-      elsif values.all? { |item| item.is_a?(Numeric) }
-        HDF5::FFI.H5T_NATIVE_DOUBLE
-      else
-        raise HDF5::Error, 'Only numeric attribute data is supported'
-      end
-    end
-
-    def buffer_for(values)
-      if values.all? { |item| item.is_a?(Integer) }
-        buffer = ::FFI::MemoryPointer.new(:int, values.length)
-        buffer.write_array_of_int(values)
-      else
-        buffer = ::FFI::MemoryPointer.new(:double, values.length)
-        buffer.write_array_of_double(values.map(&:to_f))
-      end
-
-      buffer
-    end
-
-    def native_int_bounds
-      bits = ::FFI.type_size(:int) * 8
-      max = (1 << (bits - 1)) - 1
-      min = -(1 << (bits - 1))
-      [min, max]
-    end
-
-    def validate_native_int_range!(values)
-      min, max = native_int_bounds
-      out_of_range = values.find { |value| value < min || value > max }
-      return unless out_of_range
-
-      raise HDF5::Error,
-            "Integer value #{out_of_range} is outside native int range (#{min}..#{max}). Use a smaller value."
+      dimensions = ::FFI::MemoryPointer.new(:ulong_long, shape.length)
+      dimensions.write_array_of_ulong_long(shape)
+      HDF5::FFI.H5Screate_simple(shape.length, dimensions, nil)
     end
   end
 end

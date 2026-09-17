@@ -1,39 +1,9 @@
 module HDF5
   class Dataset
-    module DataHelpers
-      module_function
-
-      def normalize_data(data)
-        return data if data.is_a?(Numo::NArray) && DType.for_numo(data)
-
-        values = data.is_a?(Array) ? data.flatten : [data]
-        raise HDF5::Error, 'Dataset data must not be empty' if values.empty?
-
-        dtype = if values.all? { |value| value.is_a?(Integer) }
-                  DType.for_symbol(:int64)
-                elsif values.all? { |value| value.is_a?(Numeric) }
-                  DType.for_symbol(:float64)
-                else
-                  raise HDF5::Error, 'Only numeric dataset data is supported'
-                end
-        dtype.numo_class.cast(data)
-      end
-
-      def buffer_for(narray)
-        binary = narray.to_binary
-        expected_bytes = narray.size * DType.for_numo(narray).itemsize
-        raise HDF5::Error, 'Numo binary representation has an unexpected size' unless binary.bytesize == expected_bytes
-
-        ::FFI::MemoryPointer.new(:char, expected_bytes).tap { |buffer| buffer.put_bytes(0, binary) }
-      end
-    end
-
-    private_constant :DataHelpers
-
     class << self
       def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
                  compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil)
-        narray = DataHelpers.normalize_data(data) unless data.nil?
+        narray = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data') unless data.nil?
         dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)
         shape ||= narray.shape
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
@@ -125,7 +95,7 @@ module HDF5
           value = dtype_object.numo_class.cast(fillvalue)
           raise HDF5::Error, 'fillvalue must be scalar' unless value.shape.empty?
 
-          check_property_status(HDF5::FFI.H5Pset_fill_value(dcpl_id, dtype_object.memory_type_id, DataHelpers.buffer_for(value)),
+          check_property_status(HDF5::FFI.H5Pset_fill_value(dcpl_id, dtype_object.memory_type_id, HDF5::DataHelpers.buffer_for(value)),
                                 'set fill value')
         end
         dcpl_id
@@ -171,12 +141,12 @@ module HDF5
                  normalized_selection.scalar? ? target_dtype.numo_class.cast(data) :
                    target_dtype.numo_class.ones(*normalized_selection.result_shape) * data
                else
-                 DataHelpers.normalize_data(data)
+                 HDF5::DataHelpers.normalize_data(data, label: 'Dataset data')
                end
       raise HDF5::Error, 'Dataset shape must match data shape' unless values.shape == normalized_selection.result_shape
 
       dtype_object = DType.for_numo(values)
-      buffer = DataHelpers.buffer_for(values)
+      buffer = HDF5::DataHelpers.buffer_for(values)
       file_space_id = HDF5::FFI.H5Dget_space(@dataset_id)
       raise HDF5::Error, 'Failed to get dataset dataspace' if file_space_id < 0
 
@@ -289,7 +259,7 @@ module HDF5
     end
 
     def append(data, axis: 0)
-      values = DataHelpers.normalize_data(data)
+      values = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data')
       current_shape = shape
       raise HDF5::Error, 'Cannot append to a scalar dataset' if current_shape.empty?
       raise IndexError, "Invalid append axis: #{axis}" unless axis.is_a?(Integer) && axis.between?(0, current_shape.length - 1)

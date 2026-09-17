@@ -47,6 +47,7 @@ end
 require_relative 'hdf5/ffi'
 
 require_relative 'hdf5/dtype'
+require_relative 'hdf5/data_helpers'
 require_relative 'hdf5/selection'
 require_relative 'hdf5/file'
 require_relative 'hdf5/group'
