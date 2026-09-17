@@ -12,6 +12,7 @@ module HDF5
       raise HDF5::Error, 'Failed to get attribute datatype' if type_id < 0
       space_id = HDF5::FFI.H5Aget_space(@attr_id)
       raise HDF5::Error, 'Failed to get attribute dataspace' if space_id < 0
+      return read_string(type_id, space_id) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
 
       dtype_object = DType.for_hdf5(type_id)
       attribute_shape = shape(space_id)
@@ -47,6 +48,16 @@ module HDF5
 
       dimensions.read_array_of_uint64(rank)
     end
+
+    def read_string(type_id, space_id)
+      buffer = ::FFI::MemoryPointer.new(:pointer)
+      status = HDF5::FFI.H5Aread(@attr_id, type_id, buffer)
+      raise HDF5::Error, 'Failed to read string attribute' if status < 0
+
+      HDF5::StringCodec.read(buffer)
+    ensure
+      HDF5::FFI.H5Dvlen_reclaim(type_id, space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer) if buffer
+    end
   end
 
   class AttributeManager
@@ -66,8 +77,10 @@ module HDF5
     end
 
     def write(attr_name, value)
-      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data')
-      dtype_object = DType.for_numo(values)
+      string_data = value.is_a?(String)
+      values = HDF5::DataHelpers.normalize_data(value, label: 'Attribute data') unless string_data
+      dtype_object = DType.for_numo(values) unless string_data
+      type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
 
       exists = HDF5::FFI.H5Aexists(@dataset_id, attr_name)
       raise HDF5::Error, "Failed to check attribute existence: #{attr_name}" if exists.negative?
@@ -77,27 +90,29 @@ module HDF5
         raise HDF5::Error, "Failed to replace attribute: #{attr_name}" if status < 0
       end
 
-      dataspace_id = create_dataspace(values.shape)
+      dataspace_id = create_dataspace(string_data ? [] : values.shape)
       raise HDF5::Error, 'Failed to create attribute dataspace' if dataspace_id < 0
 
       attr_id = HDF5::FFI.H5Acreate2(
         @dataset_id,
         attr_name,
-        dtype_object.storage_type_id,
+        type_id,
         dataspace_id,
         HDF5::DEFAULT_PROPERTY_LIST,
         HDF5::DEFAULT_PROPERTY_LIST
       )
       raise HDF5::Error, "Failed to create attribute: #{attr_name}" if attr_id < 0
 
-      buffer = HDF5::DataHelpers.buffer_for(values)
-      status = HDF5::FFI.H5Awrite(attr_id, dtype_object.memory_type_id, buffer)
+      buffer, string_pointer = string_data ? HDF5::StringCodec.buffer_for(value) : [HDF5::DataHelpers.buffer_for(values), nil]
+      memory_type_id = string_data ? type_id : dtype_object.memory_type_id
+      status = HDF5::FFI.H5Awrite(attr_id, memory_type_id, buffer)
       raise HDF5::Error, "Failed to write attribute: #{attr_name}" if status < 0
 
       value
     ensure
       HDF5::FFI.H5Aclose(attr_id) if attr_id && attr_id >= 0
       HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
+      HDF5::FFI.H5Tclose(type_id) if string_data && type_id && type_id >= 0
     end
 
     private

@@ -3,11 +3,14 @@ module HDF5
     class << self
       def create(parent_id, name, data = nil, shape: nil, dtype: nil, maxshape: nil, chunks: nil, compression: nil,
                  compression_opts: nil, shuffle: false, fletcher32: false, fillvalue: nil)
-        narray = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data') unless data.nil?
-        dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray)
-        shape ||= narray.shape
+        string_data = data.is_a?(String)
+        narray = HDF5::DataHelpers.normalize_data(data, label: 'Dataset data') unless data.nil? || string_data
+        dtype_object = dtype ? DType.for_symbol(dtype) : DType.for_numo(narray) unless string_data
+        type_id = string_data ? HDF5::StringCodec.datatype_id : dtype_object.storage_type_id
+        shape ||= string_data ? [] : narray.shape
         raise HDF5::Error, 'shape: and dtype: are required when data: is omitted' if data.nil? && (!shape || !dtype)
         raise HDF5::Error, 'Dataset shape must match data shape' if narray && shape != narray.shape
+        raise HDF5::Error, 'String dataset shape must be scalar' if string_data && !shape.empty?
 
         validate_maxshape(maxshape, shape) if maxshape
         chunks = :auto if maxshape && chunks.nil?
@@ -17,9 +20,10 @@ module HDF5
                      fillvalue:)
 
         dataset = from_id(
-          HDF5::FFI.H5Dcreate2(parent_id, name, dtype_object.storage_type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
+          HDF5::FFI.H5Dcreate2(parent_id, name, type_id, dataspace_id, HDF5::DEFAULT_PROPERTY_LIST,
                                dcpl_id || HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST), name
         )
+        dataset.write(data) if string_data
         dataset.write(narray) if narray
         return dataset unless block_given?
 
@@ -29,6 +33,7 @@ module HDF5
           dataset.close
         end
       ensure
+        HDF5::FFI.H5Tclose(type_id) if string_data && type_id && type_id >= 0
         HDF5::FFI.H5Pclose(dcpl_id) if dcpl_id && dcpl_id >= 0
         HDF5::FFI.H5Sclose(dataspace_id) if dataspace_id && dataspace_id >= 0
       end
@@ -135,6 +140,8 @@ module HDF5
     end
 
     def write(data, selection: nil)
+      return write_string(data, selection:) if data.is_a?(String)
+
       normalized_selection = Selection.normalize(selection, shape)
       values = if data.is_a?(Numeric)
                  target_dtype = dtype
@@ -278,6 +285,10 @@ module HDF5
     end
 
     def read(selection: nil)
+      type_id = HDF5::FFI.H5Dget_type(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
+      return read_string(type_id, selection:) if HDF5::FFI.H5Tget_class(type_id) == :H5T_STRING
+
       current_dtype = dtype
       current_shape = shape
       normalized_selection = Selection.normalize(selection, current_shape)
@@ -301,6 +312,7 @@ module HDF5
       result = current_dtype.numo_class.from_binary(buffer.read_bytes(bytesize), normalized_selection.result_shape)
       normalized_selection.scalar? ? result.extract : result
     ensure
+      HDF5::FFI.H5Tclose(type_id) if type_id && type_id >= 0
       HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
       HDF5::FFI.H5Sclose(file_space_id) if file_space_id && file_space_id >= 0
     end
@@ -357,6 +369,38 @@ module HDF5
     end
 
     private
+
+    def write_string(data, selection:)
+      normalized_selection = Selection.normalize(selection, shape)
+      raise HDF5::Error, 'String dataset selection must be scalar' unless normalized_selection.scalar?
+
+      type_id = HDF5::FFI.H5Dget_type(@dataset_id)
+      raise HDF5::Error, 'Failed to get dataset datatype' if type_id < 0
+      buffer, string_pointer = HDF5::StringCodec.buffer_for(data)
+      status = HDF5::FFI.H5Dwrite(@dataset_id, type_id, HDF5::DEFAULT_PROPERTY_LIST, HDF5::DEFAULT_PROPERTY_LIST,
+                                  HDF5::DEFAULT_PROPERTY_LIST, buffer)
+      raise HDF5::Error, 'Failed to write string dataset' if status < 0
+
+      data
+    ensure
+      HDF5::FFI.H5Tclose(type_id) if type_id && type_id >= 0
+    end
+
+    def read_string(type_id, selection:)
+      normalized_selection = Selection.normalize(selection, shape)
+      raise HDF5::Error, 'String dataset selection must be scalar' unless normalized_selection.scalar?
+
+      memory_space_id = create_memory_dataspace([])
+      buffer = ::FFI::MemoryPointer.new(:pointer)
+      status = HDF5::FFI.H5Dread(@dataset_id, type_id, memory_space_id, HDF5::DEFAULT_PROPERTY_LIST,
+                                 HDF5::DEFAULT_PROPERTY_LIST, buffer)
+      raise HDF5::Error, 'Failed to read string dataset' if status < 0
+
+      HDF5::StringCodec.read(buffer)
+    ensure
+      HDF5::FFI.H5Dvlen_reclaim(type_id, memory_space_id, HDF5::DEFAULT_PROPERTY_LIST, buffer) if buffer && type_id && memory_space_id
+      HDF5::FFI.H5Sclose(memory_space_id) if memory_space_id && memory_space_id >= 0
+    end
 
     def block_shape_for(dataset_shape, max_elements)
       remaining = max_elements

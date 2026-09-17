@@ -177,6 +177,31 @@ class HDF5Test < Test::Unit::TestCase
     end
   end
 
+  test 'round trips a UTF-8 string dataset' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'string.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('greeting', 'hello, world')
+        assert_equal('hello, world', dataset.read)
+        dataset.write('Ruby HDF5')
+        assert_equal('Ruby HDF5', dataset.read)
+      end
+    end
+  end
+
+  test 'round trips a UTF-8 string attribute' do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, 'string-attribute.h5')
+
+      HDF5::File.create(path) do |file|
+        dataset = file.create_dataset('values', [1])
+        dataset.attrs['label'] = 'measurement'
+        assert_equal('measurement', dataset.attrs['label'])
+      end
+    end
+  end
+
   test 'yields chunked dataset regions including a partial final chunk' do
     Dir.mktmpdir do |dir|
       path = File.join(dir, 'each-chunk.h5')
