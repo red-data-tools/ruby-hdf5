@@ -1,8 +1,10 @@
 # ruby-hdf5
 
 [![test](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml/badge.svg)](https://github.com/red-data-tools/ruby-hdf5/actions/workflows/test.yml)
+[![Gem Version](https://badge.fury.io/rb/ruby-hdf5.svg)](https://badge.fury.io/rb/ruby-hdf5)
+[![Lines of Code](https://img.shields.io/endpoint?url=https%3A%2F%2Ftokei.kojix2.net%2Fbadge%2Fgithub%2Fred-data-tools%2Fruby-hdf5%2Flines)](https://tokei.kojix2.net/github/red-data-tools/ruby-hdf5)
 
-Ruby bindings for HDF5 with Numo::NArray support.
+Ruby bindings for [HDF5](https://github.com/red-data-tools/ruby-hdf5) with [Numo::NArray](https://github.com/yoshoku/numo-narray-alt) support.
 
 ## Requirements
 
